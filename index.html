@@ -1,0 +1,1934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Folio — Books for every chapter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #14201b;
+      --ink-soft: #2a3a33;
+      --mist: #e8efe9;
+      --paper: #f3f7f4;
+      --leaf: #1f6b4a;
+      --leaf-bright: #258a5c;
+      --line: rgba(20, 32, 27, 0.12);
+      --muted: #5d6f66;
+      --white: #ffffff;
+      --shadow: 0 10px 30px rgba(22, 36, 30, 0.08);
+      --radius: 999px;
+      --header-h: 72px;
+      --font-display: "Gloock", "Times New Roman", serif;
+      --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, rgba(37, 138, 92, 0.12), transparent 55%),
+        radial-gradient(900px 420px at 95% 0%, rgba(20, 32, 27, 0.06), transparent 50%),
+        linear-gradient(180deg, var(--paper) 0%, #eef3f0 100%);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font: inherit;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      color: inherit;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ── Header ── */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      height: var(--header-h);
+      background: #ffffff;
+      border-bottom: 1px solid rgba(20, 32, 27, 0.08);
+      animation: headerIn 0.7s ease both;
+      overflow: visible;
+    }
+
+    @keyframes headerIn {
+      from {
+        opacity: 0;
+        transform: translateY(-12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 100%;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 28px;
+      overflow: visible;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      transition: transform 0.35s ease;
+    }
+
+    .brand:hover .brand-mark {
+      transform: rotate(-4deg) scale(1.05);
+    }
+
+    .brand-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 1.7rem;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      display: inline-flex;
+    }
+
+    .primary-nav {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 4px;
+      border-radius: 980px;
+      background: #f5f5f7;
+    }
+
+    .primary-nav a {
+      padding: 7px 14px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: #1d1d1f;
+      border-radius: 980px;
+      background: transparent;
+      transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .primary-nav a:hover {
+      background: rgba(0, 0, 0, 0.04);
+      color: #000;
+    }
+
+    .primary-nav a:active,
+    .primary-nav a[aria-current="page"] {
+      background: #ffffff;
+      color: #1d1d1f;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+    }
+
+    .nav-courses {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      z-index: 5;
+    }
+
+    .nav-courses-btn {
+      background: #2563eb !important;
+      color: #ffffff !important;
+      animation: coursesBtnPulse 2.2s ease-in-out infinite;
+    }
+
+    .nav-courses-btn:hover {
+      animation: none;
+      background: #1d4ed8 !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    }
+
+    @keyframes coursesBtnPulse {
+      0%, 100% {
+        transform: scale(1);
+        background: #2563eb;
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.35);
+      }
+      50% {
+        transform: scale(1.06);
+        background: #3b82f6;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+      }
+    }
+
+    .nav-courses-pop {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 50%;
+      width: 72px;
+      transform: translateX(-50%) translateY(-18px) scale(0.7);
+      opacity: 0;
+      pointer-events: none;
+      animation: coursesPopDown 0.85s cubic-bezier(0.22, 1.2, 0.36, 1) 0.35s forwards;
+      filter: drop-shadow(0 10px 18px rgba(20, 32, 27, 0.18));
+    }
+
+    .nav-courses-pop img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+    }
+
+    .nav-courses:hover .nav-courses-pop,
+    .nav-courses:focus-within .nav-courses-pop {
+      pointer-events: auto;
+      animation: coursesPopBounce 1.6s ease-in-out infinite;
+    }
+
+    @keyframes coursesPopDown {
+      0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-22px) scale(0.65);
+      }
+      70% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(4px) scale(1.05);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+      }
+    }
+
+    @keyframes coursesPopBounce {
+      0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+      50% { transform: translateX(-50%) translateY(6px) scale(1.04); }
+    }
+
+    .currency-picker {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .currency-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      padding: 0 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(20, 32, 27, 0.14);
+      background: #ffffff;
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .currency-btn:hover {
+      border-color: rgba(20, 32, 27, 0.28);
+    }
+
+    .currency-flag {
+      width: 18px;
+      height: 12px;
+      object-fit: cover;
+      border-radius: 2px;
+      display: block;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+    }
+
+    .currency-caret {
+      font-size: 0.65rem;
+      opacity: 0.55;
+      line-height: 1;
+    }
+
+    .currency-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      z-index: 80;
+      min-width: 108px;
+      padding: 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(20, 32, 27, 0.12);
+      background: #ffffff;
+      box-shadow: 0 10px 28px rgba(16, 36, 28, 0.12);
+      display: grid;
+      gap: 2px;
+    }
+
+    .currency-menu[hidden] {
+      display: none !important;
+    }
+
+    .currency-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 7px;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .currency-option:hover {
+      background: #f3f7f4;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-self: end;
+    }
+
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: min(280px, 28vw);
+      height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.72);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, width 0.3s ease;
+    }
+
+    .search:focus-within {
+      width: min(340px, 36vw);
+      border-color: rgba(31, 107, 74, 0.45);
+      box-shadow: 0 0 0 3px rgba(31, 107, 74, 0.12);
+    }
+
+    .search svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      stroke: var(--muted);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .search input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      font: inherit;
+      font-size: 0.92rem;
+      color: var(--ink);
+    }
+
+    .search input::placeholder {
+      color: var(--muted);
+    }
+
+    .icon-btn {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      display: grid;
+      place-items: center;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      background: var(--white);
+      border-color: rgba(31, 107, 74, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .cart-count {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: var(--radius);
+      background: var(--leaf);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+      line-height: 1;
+      animation: popIn 0.45s 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(0.4);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .my-books,
+    .sign-in {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 42px;
+      padding: 0 16px;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .my-books {
+      border: 1px solid rgba(20, 32, 27, 0.14);
+      background: #ffffff;
+      color: #1d1d1f;
+    }
+
+    .my-books:hover {
+      background: #f5f5f7;
+      border-color: rgba(20, 32, 27, 0.22);
+    }
+
+    .sign-in {
+      padding: 0 18px;
+      letter-spacing: 0.01em;
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .sign-in:hover {
+      background: var(--leaf);
+      transform: translateY(-1px);
+    }
+
+    a.icon-btn {
+      text-decoration: none;
+    }
+
+    .menu-toggle {
+      display: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      place-items: center;
+    }
+
+    .menu-toggle span {
+      display: block;
+      width: 16px;
+      height: 1.5px;
+      background: var(--ink);
+      position: relative;
+      transition: background 0.2s ease;
+    }
+
+    .menu-toggle span::before,
+    .menu-toggle span::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 16px;
+      height: 1.5px;
+      background: var(--ink);
+      transition: transform 0.25s ease;
+    }
+
+    .menu-toggle span::before { top: -5px; }
+    .menu-toggle span::after { top: 5px; }
+
+    .menu-toggle[aria-expanded="true"] span {
+      background: transparent;
+    }
+
+    .menu-toggle[aria-expanded="true"] span::before {
+      transform: translateY(5px) rotate(45deg);
+    }
+
+    .menu-toggle[aria-expanded="true"] span::after {
+      transform: translateY(-5px) rotate(-45deg);
+    }
+
+    .mobile-panel {
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      .header-inner {
+        grid-template-columns: auto 1fr auto;
+        gap: 12px;
+      }
+
+      .primary-nav,
+      .search,
+      .my-books,
+      .upload-book,
+      .sign-in {
+        display: none;
+      }
+
+      .menu-toggle {
+        display: grid;
+      }
+
+      .mobile-panel {
+        display: block;
+        max-height: 0;
+        overflow: hidden;
+        background: #ffffff;
+        border-bottom: 1px solid transparent;
+        transition: max-height 0.35s ease, border-color 0.2s ease;
+      }
+
+      .mobile-panel.is-open {
+        max-height: 320px;
+        border-bottom-color: var(--line);
+      }
+
+      .mobile-panel-inner {
+        padding: 12px 24px 20px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .mobile-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 44px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--white);
+      }
+
+      .mobile-search svg {
+        width: 16px;
+        height: 16px;
+        stroke: var(--muted);
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+      }
+
+      .mobile-search input {
+        width: 100%;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font: inherit;
+      }
+
+      .mobile-nav {
+        display: grid;
+        gap: 4px;
+        padding: 4px;
+        border-radius: 16px;
+        background: #f5f5f7;
+      }
+
+      .mobile-nav a {
+        padding: 12px 14px;
+        font-weight: 500;
+        font-size: 0.92rem;
+        letter-spacing: -0.01em;
+        border-radius: 12px;
+        text-align: center;
+        color: #1d1d1f;
+        background: transparent;
+      }
+
+      .mobile-nav a:hover,
+      .mobile-nav a[aria-current="page"] {
+        background: #ffffff;
+        color: #1d1d1f;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      }
+
+      .mobile-my-books,
+      .mobile-upload-book,
+      .mobile-sign-in {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 44px;
+        border-radius: 980px;
+        font-weight: 600;
+      }
+
+      .mobile-my-books,
+      .mobile-upload-book {
+        border: 1px solid rgba(20, 32, 27, 0.14);
+        background: #ffffff;
+        color: #1d1d1f;
+      }
+
+      .mobile-sign-in {
+        background: var(--ink);
+        color: #fff;
+      }
+    }
+
+    /* ── Home ── */
+    .hero {
+      background: #ffffff;
+      border-bottom: 1px solid rgba(20, 32, 27, 0.08);
+    }
+
+    .hero-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 24px;
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 0;
+      align-items: center;
+      min-height: 340px;
+      background: #ffffff;
+    }
+
+    .hero-copy {
+      position: relative;
+      max-width: none;
+      width: 100%;
+      min-height: 340px;
+      display: flex;
+      align-items: center;
+      isolation: isolate;
+      z-index: 1;
+    }
+
+    .hero-copy-bg {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 8%;
+      right: -18%;
+      z-index: 0;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .hero-copy-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: right center;
+      display: block;
+      opacity: 0.92;
+    }
+
+    .hero-copy-content {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 360px;
+      padding: 18px 8px;
+    }
+
+    .hero-brand {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 4vw, 3rem);
+      font-weight: 400;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin: 0 0 12px;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      overflow: hidden;
+      min-height: 1.1em;
+    }
+
+    .hero-brand .letter {
+      display: inline-block;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    .hero-brand .letter.accent {
+      color: var(--leaf);
+    }
+
+    .hero-brand.is-ready .letter {
+      animation: letterMeet 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .hero-brand.is-ready .letter:nth-child(1) {
+      animation-delay: 0.05s;
+      --from-x: -48px;
+      --from-y: -28px;
+    }
+
+    .hero-brand.is-ready .letter:nth-child(2) {
+      animation-delay: 0.14s;
+      --from-x: -18px;
+      --from-y: 36px;
+    }
+
+    .hero-brand.is-ready .letter:nth-child(3) {
+      animation-delay: 0.22s;
+      --from-x: 10px;
+      --from-y: -40px;
+    }
+
+    .hero-brand.is-ready .letter:nth-child(4) {
+      animation-delay: 0.3s;
+      --from-x: 36px;
+      --from-y: 30px;
+    }
+
+    .hero-brand.is-ready .letter:nth-child(5) {
+      animation-delay: 0.38s;
+      --from-x: 56px;
+      --from-y: -22px;
+    }
+
+    @keyframes letterMeet {
+      from {
+        opacity: 0;
+        transform: translate(var(--from-x), var(--from-y)) scale(0.55) rotate(var(--from-rot, -12deg));
+      }
+      to {
+        opacity: 1;
+        transform: translate(0, 0) scale(1) rotate(0deg);
+      }
+    }
+
+    .hero-brand.is-ready .letter:nth-child(1) { --from-rot: -18deg; }
+    .hero-brand.is-ready .letter:nth-child(2) { --from-rot: 14deg; }
+    .hero-brand.is-ready .letter:nth-child(3) { --from-rot: -10deg; }
+    .hero-brand.is-ready .letter:nth-child(4) { --from-rot: 16deg; }
+    .hero-brand.is-ready .letter:nth-child(5) { --from-rot: -8deg; }
+
+    .brand-name .letter {
+      display: inline-block;
+      opacity: 0;
+    }
+
+    .brand-name .letter.accent {
+      color: var(--leaf);
+    }
+
+    .brand-name.is-ready .letter {
+      animation: letterMeet 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .brand-name.is-ready .letter:nth-child(1) {
+      animation-delay: 0.08s;
+      --from-x: -24px;
+      --from-y: -12px;
+      --from-rot: -10deg;
+    }
+
+    .brand-name.is-ready .letter:nth-child(2) {
+      animation-delay: 0.16s;
+      --from-x: -8px;
+      --from-y: 16px;
+      --from-rot: 8deg;
+    }
+
+    .brand-name.is-ready .letter:nth-child(3) {
+      animation-delay: 0.24s;
+      --from-x: 6px;
+      --from-y: -18px;
+      --from-rot: -6deg;
+    }
+
+    .brand-name.is-ready .letter:nth-child(4) {
+      animation-delay: 0.32s;
+      --from-x: 18px;
+      --from-y: 14px;
+      --from-rot: 10deg;
+    }
+
+    .brand-name.is-ready .letter:nth-child(5) {
+      animation-delay: 0.4s;
+      --from-x: 28px;
+      --from-y: -10px;
+      --from-rot: -4deg;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-brand .letter,
+      .brand-name .letter {
+        opacity: 1;
+        animation: none !important;
+        transform: none !important;
+      }
+    }
+
+    .hero-line {
+      margin: 0 0 8px;
+      font-size: 1.2rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      color: var(--ink);
+    }
+
+    .hero-support {
+      margin: 0 0 20px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--muted);
+      max-width: 34ch;
+    }
+
+    .hero-support .accent-red {
+      color: #d12a2a;
+      font-size: 1.2em;
+      font-weight: 700;
+    }
+
+    .hero-support .accent-yellow {
+      color: inherit;
+      font-weight: inherit;
+      background: #c8f0d8;
+      padding: 0.05em 0.2em;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      padding: 0 18px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--leaf);
+    }
+
+    .btn-ghost {
+      border: 1px solid var(--line);
+      color: var(--ink);
+      background: transparent;
+    }
+
+    .btn-ghost:hover {
+      border-color: rgba(31, 107, 74, 0.45);
+    }
+
+    .hero-visual {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 11;
+      background: #ffffff;
+      margin-left: -24px;
+      z-index: 0;
+    }
+
+    .hero-visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: left center;
+      display: block;
+    }
+
+    @media (max-width: 900px) {
+      .hero-inner {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        min-height: 0;
+        padding-top: 24px;
+        padding-bottom: 24px;
+      }
+
+      .hero-copy {
+        min-height: 280px;
+      }
+
+      .hero-copy-bg {
+        left: 0;
+        right: 0;
+      }
+
+      .hero-copy-bg img {
+        object-position: center;
+      }
+
+      .hero-visual {
+        aspect-ratio: 16 / 12;
+        order: -1;
+        margin-left: 0;
+      }
+
+      .hero-visual img {
+        object-position: center;
+      }
+    }
+
+    .section {
+      padding: 48px 24px;
+    }
+
+    .section-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.7rem;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .stacks-section {
+      background: #ffffff;
+    }
+
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 28px 18px;
+      padding: 8px 0 4px;
+    }
+
+    .book {
+      display: grid;
+      gap: 12px;
+      text-align: left;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: bookIn 0.55s ease forwards;
+    }
+
+    .book:nth-child(1) { animation-delay: 0.02s; }
+    .book:nth-child(2) { animation-delay: 0.06s; }
+    .book:nth-child(3) { animation-delay: 0.1s; }
+    .book:nth-child(4) { animation-delay: 0.14s; }
+    .book:nth-child(5) { animation-delay: 0.18s; }
+    .book:nth-child(6) { animation-delay: 0.22s; }
+    .book:nth-child(7) { animation-delay: 0.26s; }
+    .book:nth-child(8) { animation-delay: 0.3s; }
+    .book:nth-child(9) { animation-delay: 0.34s; }
+    .book:nth-child(10) { animation-delay: 0.38s; }
+    .book:nth-child(11) { animation-delay: 0.42s; }
+    .book:nth-child(12) { animation-delay: 0.46s; }
+
+    @keyframes bookIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .book-cover {
+      position: relative;
+      aspect-ratio: 2 / 3;
+      overflow: hidden;
+      border-radius: 6px;
+      background: #e6ece8;
+      box-shadow:
+        0 1px 1px rgba(20, 32, 27, 0.06),
+        0 10px 22px rgba(20, 32, 27, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .book-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.35s ease;
+    }
+
+    .book-cover::after {
+      content: "Add";
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%) translateY(8px);
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: var(--ink);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      opacity: 0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+    }
+
+    .book:hover .book-cover {
+      transform: translateY(-8px);
+      box-shadow:
+        0 2px 2px rgba(20, 32, 27, 0.06),
+        0 18px 32px rgba(20, 32, 27, 0.16);
+    }
+
+    .book:hover .book-cover img {
+      transform: scale(1.04);
+    }
+
+    .book:hover .book-cover::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .book-meta {
+      display: grid;
+      gap: 2px;
+    }
+
+    .book-meta h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+    }
+
+    .book-meta p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .book-meta strong {
+      margin-top: 4px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--leaf);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .book {
+        opacity: 1;
+        transform: none;
+        animation: none;
+      }
+    }
+
+    .paths {
+      background: #ffffff;
+      padding-top: 40px;
+      padding-bottom: 56px;
+      border-top: 1px solid var(--line);
+    }
+
+    .paths-head {
+      margin: 0 0 28px;
+      max-width: 36ch;
+    }
+
+    .paths-head h2 {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 3vw, 2.1rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--ink);
+    }
+
+    .paths-head p {
+      margin: 0;
+      font-size: 0.98rem;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .paths-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0 28px;
+    }
+
+    .path-card {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 14px;
+      padding: 22px 0 0;
+      border-top: 1px solid var(--line);
+      min-height: 100%;
+      transition: border-color 0.25s ease;
+    }
+
+    .path-card:hover,
+    .path-card:focus-within {
+      border-top-color: var(--leaf);
+    }
+
+    .path-kicker {
+      margin: 0;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--leaf);
+    }
+
+    .path-card h3 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(1.25rem, 2vw, 1.5rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      color: var(--ink);
+    }
+
+    .path-card p {
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .path-card .btn {
+      justify-self: start;
+      margin-top: 4px;
+      position: relative;
+      z-index: 1;
+      background: var(--leaf);
+      color: #ffffff;
+      border: 0;
+    }
+
+    .path-card .btn:hover {
+      background: var(--leaf-bright);
+      color: #ffffff;
+    }
+
+    .path-card-courses {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      min-height: 340px;
+      padding: 22px 18px 20px;
+      border-top: 1px solid var(--line);
+      background-color: #ffffff;
+    }
+
+    .path-card-courses::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background:
+        url("assets/path-courses.jpg") center center / 78% auto no-repeat;
+      pointer-events: none;
+    }
+
+    .path-card-courses::after {
+      content: none;
+    }
+
+    .path-card-courses > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .path-courses-copy {
+      display: grid;
+      gap: 8px;
+      max-width: 28ch;
+      margin: auto 0;
+      padding: 0;
+      background: transparent;
+    }
+
+    .path-courses-copy h3,
+    .path-courses-copy p {
+      margin: 0;
+      background: transparent;
+      text-shadow: 0 1px 10px rgba(255, 255, 255, 0.95), 0 0 2px rgba(255, 255, 255, 0.9);
+    }
+
+    .path-courses-copy p,
+    .path-courses-copy p strong {
+      color: #c62828;
+    }
+
+    .path-courses-copy p strong {
+      display: inline;
+      padding: 0.12em 0.2em;
+      background: linear-gradient(
+        transparent 8%,
+        rgba(255, 241, 118, 0.35) 8%,
+        rgba(255, 241, 118, 0.35) 92%,
+        transparent 92%
+      );
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+      text-shadow: none;
+    }
+
+    .path-courses-white {
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(20, 32, 27, 0.35);
+    }
+
+    .path-card-courses .path-kicker {
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .path-card-courses .btn {
+      margin-top: 0;
+    }
+
+    .path-card-sell {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      min-height: 340px;
+      padding: 22px 18px 20px;
+      border-top: 1px solid var(--line);
+      background-color: #f07828;
+    }
+
+    .path-card-sell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background:
+        url("assets/path-sell.webp") center center / 82% auto no-repeat;
+      pointer-events: none;
+    }
+
+    .path-card-sell > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .path-sell-copy {
+      display: grid;
+      gap: 8px;
+      max-width: 28ch;
+      margin: auto 0;
+      background: transparent;
+    }
+
+    .path-sell-copy h3,
+    .path-sell-copy p {
+      margin: 0;
+      color: #14201b;
+      text-shadow: none;
+    }
+
+    .path-sell-copy p {
+      font-weight: 600;
+    }
+
+    .path-sell-mark {
+      padding: 0.08em 0.12em;
+      background: rgba(255, 255, 255, 0.78);
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .path-card-sell .path-kicker {
+      color: #14201b;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .path-card-sell .btn {
+      margin-top: 0;
+    }
+
+    .path-card-tutor {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      min-height: 340px;
+      padding: 22px 18px 20px;
+      border-top: 1px solid var(--line);
+      background-color: #f4efe6;
+    }
+
+    .path-card-tutor::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background:
+        url("assets/path-tutor.png") center 60% / 88% auto no-repeat;
+      pointer-events: none;
+    }
+
+    .path-card-tutor > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .path-tutor-copy {
+      display: grid;
+      gap: 8px;
+      max-width: 28ch;
+      margin: auto 0;
+      background: transparent;
+    }
+
+    .path-tutor-copy h3,
+    .path-tutor-copy p {
+      margin: 0;
+      color: #1565c0;
+    }
+
+    .path-tutor-copy p {
+      font-weight: 600;
+    }
+
+    .path-tutor-mark {
+      padding: 0.08em 0.12em;
+      color: #1565c0;
+      background: rgba(255, 255, 255, 0.82);
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .path-card-tutor .path-kicker {
+      color: #14201b;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .path-card-tutor .btn {
+      margin-top: 0;
+    }
+
+    .site-footer {
+      margin-top: 40px;
+      background:
+        linear-gradient(180deg, #ffffff 0%, #f4f8f5 100%);
+      border-top: 3px solid var(--leaf);
+      color: var(--ink-soft);
+    }
+
+    .footer-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 40px 24px 28px;
+    }
+
+    .footer-mast {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .footer-wordmark {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--ink);
+    }
+
+    .footer-wordmark img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+    }
+
+    .footer-wordmark strong {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 7vw, 4.6rem);
+      font-weight: 400;
+      letter-spacing: -0.04em;
+      line-height: 0.9;
+    }
+
+    .footer-wordmark strong span {
+      color: var(--leaf);
+    }
+
+    .footer-mast p {
+      margin: 0;
+      max-width: 220px;
+      text-align: right;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .footer-mid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 32px;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--line);
+      align-items: start;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      align-items: center;
+    }
+
+    .footer-links a {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--ink-soft);
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--leaf);
+    }
+
+    .footer-links .sep {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(20, 32, 27, 0.22);
+      flex-shrink: 0;
+    }
+
+    .footer-subscribe {
+      display: grid;
+      gap: 8px;
+      justify-items: stretch;
+    }
+
+    .footer-subscribe p {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .footer-subscribe-row {
+      display: flex;
+      align-items: end;
+      gap: 10px;
+      border-bottom: 1.5px solid var(--ink);
+      padding-bottom: 8px;
+    }
+
+    .footer-subscribe input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      font: inherit;
+      font-size: 0.95rem;
+      color: var(--ink);
+      padding: 4px 0;
+    }
+
+    .footer-subscribe input::placeholder {
+      color: var(--muted);
+    }
+
+    .footer-subscribe button {
+      border: 0;
+      background: transparent;
+      color: var(--leaf);
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 4px 0;
+      white-space: nowrap;
+    }
+
+    .footer-subscribe button:hover {
+      color: var(--ink);
+    }
+
+    .footer-base {
+      padding-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px 20px;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .footer-base-links {
+      display: flex;
+      gap: 16px;
+    }
+
+    .footer-base-links a:hover {
+      color: var(--leaf);
+    }
+
+    @media (max-width: 800px) {
+      .footer-mast {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .footer-mast p {
+        text-align: left;
+        max-width: 28ch;
+      }
+
+      .footer-mid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .stack-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .stack-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .paths-list {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .section-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .stack-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px 12px;
+      }
+
+      .paths-list {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .book-cover::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/" aria-label="Folio home">
+        <span class="brand-mark" aria-hidden="true">
+          <img src="assets/logo.png" alt="" width="48" height="48" />
+        </span>
+        <span class="brand-name" aria-label="Folio">
+          <span class="letter" aria-hidden="true">F</span><span class="letter" aria-hidden="true">o</span><span class="letter" aria-hidden="true">l</span><span class="letter accent" aria-hidden="true">i</span><span class="letter accent" aria-hidden="true">o</span>
+        </span>
+      </a>
+
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="#stacks">Stacks</a>
+        <a href="#stacks">Buzz</a>
+        <a href="#paths">Courses &amp; more</a>
+        <span class="nav-courses">
+          <a class="nav-courses-btn" href="courses.html">Courses</a>
+          <a class="nav-courses-pop" href="courses.html" tabindex="-1" aria-hidden="true">
+            <img src="assets/course-grad.jpg" alt="" width="72" height="72" />
+          </a>
+        </span>
+        <a href="#stacks">Blog</a>
+      </nav>
+
+      <div class="header-actions">
+        <label class="search" aria-label="Search books">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <input type="search" placeholder="Search titles, authors…" />
+        </label>
+
+        <label class="currency-picker">
+          <span class="visually-hidden">Currency</span>
+          <select id="currency-select" aria-label="Display currency"></select>
+        </label>
+
+        <button class="icon-btn" type="button" aria-label="Wishlist">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" />
+          </svg>
+        </button>
+
+        <button class="icon-btn" type="button" aria-label="Cart, 2 items">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 7h15l-1.5 9H8L6 7Z" />
+            <path d="M6 7 5 3H2" />
+            <circle cx="9" cy="20" r="1.2" />
+            <circle cx="18" cy="20" r="1.2" />
+          </svg>
+          <span class="cart-count">2</span>
+        </button>
+
+        <a class="my-books" href="account.html">My books</a>
+
+        <a class="icon-btn upload-book" href="account.html#sell" aria-label="Upload my book" title="Upload my book">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 16V5" />
+            <path d="m8 9 4-4 4 4" />
+            <path d="M5 19h14" />
+          </svg>
+        </a>
+
+        <a class="sign-in" href="login.html">Sign in</a>
+
+        <button
+          class="menu-toggle"
+          type="button"
+          aria-label="Open menu"
+          aria-expanded="false"
+          aria-controls="mobile-panel"
+        >
+          <span></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="mobile-panel" id="mobile-panel">
+      <div class="mobile-panel-inner">
+        <label class="mobile-search" aria-label="Search books">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <input type="search" placeholder="Search titles, authors…" />
+        </label>
+
+        <nav class="mobile-nav" aria-label="Mobile">
+          <a href="#stacks">Stacks</a>
+          <a href="#stacks">Buzz</a>
+          <a href="#paths">Courses &amp; more</a>
+          <a href="courses.html">Courses</a>
+          <a href="#stacks">Blog</a>
+        </nav>
+
+        <a class="mobile-my-books" href="account.html">My books</a>
+        <a class="mobile-upload-book" href="account.html#sell">Upload my book</a>
+        <a class="mobile-sign-in" href="login.html">Sign in</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-label="Folio home">
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <div class="hero-copy-bg" aria-hidden="true">
+            <img src="assets/hero-copy-bg.jpg" alt="" />
+          </div>
+          <div class="hero-copy-content">
+            <p class="hero-brand" aria-label="Folio">
+              <span class="letter" aria-hidden="true">F</span><span class="letter" aria-hidden="true">o</span><span class="letter" aria-hidden="true">l</span><span class="letter accent" aria-hidden="true">i</span><span class="letter accent" aria-hidden="true">o</span>
+            </p>
+            <h1 class="hero-line">Find the book that finds you back.</h1>
+            <p class="hero-support">A sharper shelf for readers <span class="accent-red">who choose by</span> curiosity, mood, and <span class="accent-yellow">the next late night.</span></p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#stacks">Enter the stacks</a>
+              <a class="btn btn-ghost" href="#paths">Courses &amp; more</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <img src="assets/hero-right-1.jpg" alt="People reading together" />
+        </div>
+      </div>
+    </section>
+
+    <section class="section stacks-section" id="stacks" aria-labelledby="stacks-title">
+      <div class="section-inner">
+        <h2 id="stacks-title" class="visually-hidden">From the stacks</h2>
+
+        <div class="stack-grid">
+          <a class="book" href="#">
+            <div class="book-cover"><img src="assets/cover-1.jpg" alt="Klara and the Sun cover" /></div>
+            <div class="book-meta"><h3>Klara and the Sun</h3><p>Kazuo Ishiguro</p><strong class="price" data-usd="16">$16.00</strong></div>
+          </a>
+          <a class="book" href="#">
+            <div class="book-cover"><img src="assets/cover-2.jpg" alt="Project Hail Mary cover" /></div>
+            <div class="book-meta"><h3>Project Hail Mary</h3><p>Andy Weir</p><strong class="price" data-usd="18.5">$18.50</strong></div>
+          </a>
+          <a class="book" href="#">
+            <div class="book-cover"><img src="assets/cover-3.jpg" alt="The Midnight Library cover" /></div>
+            <div class="book-meta"><h3>The Midnight Library</h3><p>Matt Haig</p><strong class="price" data-usd="15">$15.00</strong></div>
+          </a>
+          <a class="book" href="#">
+            <div class="book-cover"><img src="assets/cover-4.jpg" alt="Pride and Prejudice cover" /></div>
+            <div class="book-meta"><h3>Pride and Prejudice</h3><p>Jane Austen</p><strong class="price" data-usd="12">$12.00</strong></div>
+          </a>
+          <a class="book" href="#">
+            <div class="book-cover"><img src="assets/cover-5.jpg" alt="Atomic Habits cover" /></div>
+            <div class="book-meta"><h3>Atomic Habits</h3><p>James Clear</p><strong class="price" data-usd="17">$17.00</strong></div>
+          </a>
+          <a class="book" href="#">
+            <div class="book-cover"><img src="assets/cover-6.jpg" alt="Where the Crawdads Sing cover" /></div>
+            <div class="book-meta"><h3>Where the Crawdads Sing</h3><p>Delia Owens</p><strong class="price" data-usd="14.5">$14.50</strong></div>
+          </a>
+          <a class="book" href="#">
+            <div class="book-cover"><img src="assets/cover-7.jpg" alt="The Silent Patient cover" /></div>
+            <div class="book-meta"><h3>The Silent Patient</h3><p>Alex Michaelides</p><strong class="price" data-usd="13">$13.00</strong></div>
+          </a>
+          <a class="book" href="#">
+            <div class="book-cover"><img src="assets/cover-8.jpg" alt="Educated cover" /></div>
+            <div class="book-meta"><h3>Educated</h3><p>Tara Westover</p><strong class="price" data-usd="15.5">$15.50</strong></div>
+          </a>
+          <a class="book" href="#">
+            <div class="book-cover"><img src="assets/cover-9.jpg" alt="Dune cover" /></div>
+            <div class="book-meta"><h3>Dune</h3><p>Frank Herbert</p><strong class="price" data-usd="19">$19.00</strong></div>
+          </a>
+          <a class="book" href="#">
+            <div class="book-cover"><img src="assets/cover-10.jpg" alt="Circe cover" /></div>
+            <div class="book-meta"><h3>Circe</h3><p>Madeline Miller</p><strong class="price" data-usd="16.5">$16.50</strong></div>
+          </a>
+          <a class="book" href="#">
+            <div class="book-cover"><img src="assets/cover-11.jpg" alt="Normal People cover" /></div>
+            <div class="book-meta"><h3>Normal People</h3><p>Sally Rooney</p><strong class="price" data-usd="14">$14.00</strong></div>
+          </a>
+          <a class="book" href="#">
+            <div class="book-cover"><img src="assets/cover-12.jpg" alt="The Alchemist cover" /></div>
+            <div class="book-meta"><h3>The Alchemist</h3><p>Paulo Coelho</p><strong class="price" data-usd="11">$11.00</strong></div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section paths" id="paths" aria-labelledby="paths-title">
+      <div class="section-inner">
+        <div class="paths-head">
+          <h2 id="paths-title">Go further with Folio</h2>
+        </div>
+
+        <div class="paths-list">
+          <article class="path-card path-card-courses">
+            <p class="path-kicker">Learn</p>
+            <div class="path-courses-copy">
+              <h3>Enroll in courses</h3>
+              <p><strong>Browse live classes from Folio instructors, pay to <span class="path-courses-white">enroll, and request a certificate when you</span> finish.</strong></p>
+            </div>
+            <a class="btn btn-primary" href="course-catalog.html">Browse courses</a>
+          </article>
+
+          <article class="path-card path-card-sell">
+            <p class="path-kicker">Sell</p>
+            <div class="path-sell-copy">
+              <h3><span class="path-sell-mark">Sell your book</span></h3>
+              <p><span class="path-sell-mark">Upload a title from your shelf, set a fair price, and list it once an admin approves your listing.</span></p>
+            </div>
+            <a class="btn btn-primary" href="account.html#sell">Upload my book</a>
+          </article>
+
+          <article class="path-card path-card-tutor">
+            <p class="path-kicker">Teach</p>
+            <div class="path-tutor-copy">
+              <h3><span class="path-tutor-mark">Become a tutor</span></h3>
+              <p><span class="path-tutor-mark">Apply as an instructor, get approved, then publish paid courses learners can enroll in on Folio.</span></p>
+            </div>
+            <a class="btn btn-primary" href="login.html#instructor">Teach on Folio</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-shell">
+      <div class="footer-mast">
+        <a class="footer-wordmark" href="/" aria-label="Folio home">
+          <img src="assets/logo.png" alt="" width="52" height="52" />
+          <strong>Fol<span>io</span></strong>
+        </a>
+        <p>Books for every chapter.</p>
+      </div>
+
+      <div class="footer-mid">
+        <nav class="footer-links" aria-label="Footer">
+          <a href="#stacks">Stacks</a><span class="sep" aria-hidden="true"></span>
+          <a href="#stacks">Buzz</a><span class="sep" aria-hidden="true"></span>
+          <a href="#paths">Courses &amp; more</a><span class="sep" aria-hidden="true"></span>
+          <a href="blog.html">Blog</a><span class="sep" aria-hidden="true"></span>
+          <a href="#">Orders</a><span class="sep" aria-hidden="true"></span>
+          <a href="#">Shipping</a><span class="sep" aria-hidden="true"></span>
+          <a href="#">About</a><span class="sep" aria-hidden="true"></span>
+          <a href="#">Contact</a>
+        </nav>
+
+        <form class="footer-subscribe" action="#" method="post" onsubmit="return false;">
+          <p>New titles in your inbox</p>
+          <div class="footer-subscribe-row">
+            <label class="visually-hidden" for="footer-email">Email</label>
+            <input id="footer-email" type="email" name="email" placeholder="Email address" autocomplete="email" required />
+            <button type="submit">Subscribe</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="footer-base">
+        <span>© 2026 Folio</span>
+        <div class="footer-base-links">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="#">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/auth.js?v=4"></script>
+  <script>
+    document.querySelectorAll(".hero-brand, .brand-name").forEach((el) => {
+      requestAnimationFrame(() => el.classList.add("is-ready"));
+    });
+
+    const toggle = document.querySelector(".menu-toggle");
+    const panel = document.getElementById("mobile-panel");
+
+    toggle.addEventListener("click", () => {
+      const open = toggle.getAttribute("aria-expanded") === "true";
+      toggle.setAttribute("aria-expanded", String(!open));
+      toggle.setAttribute("aria-label", open ? "Open menu" : "Close menu");
+      panel.classList.toggle("is-open", !open);
+    });
+
+    function applyPrices() {
+      document.querySelectorAll("[data-usd]").forEach((el) => {
+        el.textContent = FolioAuth.formatMoney(el.dataset.usd);
+      });
+    }
+
+    FolioAuth.mountCurrencySelect(document.getElementById("currency-select"), applyPrices);
+    window.addEventListener("folio:currency", applyPrices);
+    applyPrices();
+  </script>
+</body>
+</html>

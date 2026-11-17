@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Folio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body class="admin-body">
+  <div class="admin-frame">
+    <aside class="admin-rail">
+      <a class="brand" href="index.html" aria-label="Folio home">
+        <img src="assets/logo.png" alt="" width="36" height="36" />
+        <strong>Fol<span>io</span></strong>
+      </a>
+
+      <nav class="admin-rail-nav" aria-label="Admin sections">
+        <button type="button" class="active" data-panel="dashboard">Dashboard</button>
+        <button type="button" data-panel="vendors">Vendors</button>
+        <button type="button" data-panel="payments">Payments</button>
+        <button type="button" data-panel="withdrawals">Withdrawals</button>
+        <button type="button" data-panel="disputes">Disputes</button>
+        <button type="button" data-panel="notifications">Notifications</button>
+        <button type="button" data-panel="reviews">Reviews &amp; rating</button>
+        <button type="button" data-panel="tutors">Tutors</button>
+        <button type="button" data-panel="courses">Courses</button>
+        <button type="button" data-panel="blog">Blog</button>
+        <button type="button" data-panel="settings">Settings</button>
+      </nav>
+
+      <div class="admin-rail-foot">
+        <label class="currency-picker currency-picker-rail">
+          <span class="visually-hidden">Currency</span>
+          <select id="currency-select" aria-label="Display currency"></select>
+        </label>
+        <a class="btn btn-light" href="index.html">Shop</a>
+        <button class="btn btn-leaf" type="button" id="logout-btn">Sign out</button>
+      </div>
+    </aside>
+
+    <main class="admin-workspace">
+      <div class="admin-main">
+        <!-- Dashboard -->
+        <section class="admin-panel" id="panel-dashboard">
+          <div class="admin-card">
+            <h2>Sales overview</h2>
+            <p class="hint">Marketplace snapshot for admins.</p>
+            <div class="stats admin-stats sales-overview-stats" id="sales-overview"></div>
+          </div>
+
+          <div class="admin-card">
+            <div class="profit-head">
+              <div>
+                <h2>Profit analysis</h2>
+                <p class="hint" style="margin:0">Track Folio profit from tutor fees and book commissions.</p>
+              </div>
+              <div class="period-tabs" role="tablist" aria-label="Profit period">
+                <button type="button" class="period-tab" data-profit-period="daily">Daily</button>
+                <button type="button" class="period-tab" data-profit-period="weekly">Weekly</button>
+                <button type="button" class="period-tab active" data-profit-period="monthly">Monthly</button>
+                <button type="button" class="period-tab" data-profit-period="yearly">Yearly</button>
+              </div>
+            </div>
+            <div class="stats admin-stats" id="profit-stats" style="margin-top:16px"></div>
+
+            <div class="profit-calendar-wrap">
+              <div class="profit-calendar-head">
+                <h3 class="profit-chart-title" style="margin:0">Profit calendar</h3>
+                <div class="profit-calendar-nav">
+                  <button type="button" class="tiny" id="profit-cal-prev">Prev</button>
+                  <strong id="profit-cal-label">—</strong>
+                  <button type="button" class="tiny" id="profit-cal-next">Next</button>
+                </div>
+              </div>
+              <p class="hint" style="margin:8px 0 12px">Click a day to check that date. Use the range below to inspect a custom window.</p>
+              <div class="profit-calendar" id="profit-calendar" aria-label="Profit calendar"></div>
+              <div class="profit-range-row">
+                <div class="field">
+                  <label for="profit-from">From</label>
+                  <input id="profit-from" type="date" />
+                </div>
+                <div class="field">
+                  <label for="profit-to">To</label>
+                  <input id="profit-to" type="date" />
+                </div>
+                <div class="profit-range-actions">
+                  <button class="btn btn-leaf" type="button" id="profit-range-apply">Check range</button>
+                  <button class="btn btn-light" type="button" id="profit-range-clear">Clear</button>
+                </div>
+              </div>
+              <p class="hint" id="profit-selected-note" style="margin-top:10px"></p>
+            </div>
+
+            <div class="profit-chart-wrap">
+              <h3 class="profit-chart-title">Profit over time</h3>
+              <div class="profit-chart" id="profit-chart" aria-label="Profit chart"></div>
+              <div class="bar-list" id="profit-bars" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+          <div class="admin-card">
+            <h2>Top vendors</h2>
+            <p class="hint">Highest-earning sellers on Folio.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Vendor</th>
+                    <th>Sales</th>
+                    <th>Revenue</th>
+                    <th>Payout</th>
+                  </tr>
+                </thead>
+                <tbody id="top-vendors-body"></tbody>
+              </table>
+            </div>
+            <p class="empty" id="top-vendors-empty" hidden>No vendor sales yet.</p>
+          </div>
+
+          <div class="admin-card">
+            <h2>Platform stats</h2>
+            <div class="stats admin-stats" id="stats"></div>
+          </div>
+
+          <div class="admin-card">
+            <h2>Pending books</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Book</th>
+                    <th>Seller</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="pending-books-body"></tbody>
+              </table>
+            </div>
+            <p class="empty" id="pending-books-empty" hidden>No books awaiting moderation.</p>
+          </div>
+        </section>
+
+        <!-- Vendors -->
+        <section class="admin-panel" id="panel-vendors" hidden>
+          <div class="admin-card">
+            <h2>Vendors</h2>
+            <p class="hint">Approve sellers and review their listed books.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Seller status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="vendors-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="admin-card">
+            <h2>All listings</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Book</th>
+                    <th>Seller</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="listings-body"></tbody>
+              </table>
+            </div>
+            <p class="empty" id="listings-empty" hidden>No seller listings yet.</p>
+          </div>
+        </section>
+
+        <!-- Payments -->
+        <section class="admin-panel" id="panel-payments" hidden>
+          <div class="admin-card">
+            <h2>Payments</h2>
+            <p class="hint">Track order totals, platform fees, and seller payouts.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Seller</th>
+                    <th>Amount</th>
+                    <th>Platform fee</th>
+                    <th>Seller payout</th>
+                    <th>Delivery</th>
+                  </tr>
+                </thead>
+                <tbody id="payments-body"></tbody>
+              </table>
+            </div>
+            <p class="empty" id="payments-empty" hidden>No payments yet.</p>
+          </div>
+        </section>
+
+        <!-- Withdrawals -->
+        <section class="admin-panel" id="panel-withdrawals" hidden>
+          <div class="admin-card">
+            <h2>Withdrawals</h2>
+            <p class="hint">Review seller payout requests and mark them as paid.</p>
+            <div class="stats" id="withdrawal-stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px"></div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Seller</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Requested</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="withdrawals-body"></tbody>
+              </table>
+            </div>
+            <p class="empty" id="withdrawals-empty" hidden>No withdrawal requests yet.</p>
+          </div>
+        </section>
+
+        <!-- Disputes -->
+        <section class="admin-panel" id="panel-disputes" hidden>
+          <div class="admin-card">
+            <h2>Disputes</h2>
+            <p class="hint">Refund requests and delivery issues.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Seller</th>
+                    <th>Amount</th>
+                    <th>Refund</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="disputes-body"></tbody>
+              </table>
+            </div>
+            <p class="empty" id="disputes-empty" hidden>No disputes right now.</p>
+          </div>
+        </section>
+
+        <!-- Notifications -->
+        <section class="admin-panel" id="panel-notifications" hidden>
+          <div class="admin-card">
+            <h2>Notifications</h2>
+            <form id="notify-form" style="margin-bottom:18px">
+              <p class="form-msg" id="notify-msg"></p>
+              <div class="field">
+                <label for="notify-audience">Send to</label>
+                <select id="notify-audience" required>
+                  <option value="admin">Admin log only</option>
+                  <option value="agents">Agent accounts (book sellers)</option>
+                  <option value="tutors">Tutor accounts</option>
+                </select>
+                <p class="hint" style="margin-top:6px">
+                  Choose agents or tutors to push the notice into their Account → Notifications.
+                </p>
+              </div>
+              <div class="field">
+                <label for="notify-title">Title</label>
+                <input id="notify-title" type="text" required placeholder="Platform update" />
+              </div>
+              <div class="field">
+                <label for="notify-body">Message</label>
+                <textarea id="notify-body" required placeholder="Write the notification…"></textarea>
+              </div>
+              <button class="btn btn-dark" type="submit">Send notification</button>
+            </form>
+            <div id="notifications-list"></div>
+          </div>
+        </section>
+
+        <!-- Settings -->
+        <section class="admin-panel" id="panel-settings" hidden>
+          <div class="admin-card">
+            <h2>Platform settings</h2>
+            <p class="hint">Configure fees, store details, and moderation defaults.</p>
+            <form id="settings-form">
+              <p class="form-msg" id="settings-msg"></p>
+              <div class="field">
+                <label for="set-store-name">Store name</label>
+                <input id="set-store-name" type="text" required />
+              </div>
+              <div class="field">
+                <label for="set-support-email">Support email</label>
+                <input id="set-support-email" type="email" required />
+              </div>
+              <div class="field">
+                <label for="set-fee">Book seller platform fee (%)</label>
+                <input id="set-fee" type="number" min="0" max="40" step="0.1" required />
+              </div>
+              <div class="field">
+                <label for="set-tutor-fee-percent">Tutor earnings fee (%)</label>
+                <input id="set-tutor-fee-percent" type="number" min="0" max="50" step="0.1" required />
+                <p class="hint" style="margin-top:6px">Folio keeps this share of every course enrollment payout to tutors.</p>
+              </div>
+              <div class="field">
+                <label for="set-currency">Store base display currency</label>
+                <select id="set-currency">
+                  <option value="USD">USD — US Dollar</option>
+                  <option value="EUR">EUR — Euro</option>
+                  <option value="GBP">GBP — British Pound</option>
+                  <option value="CAD">CAD — Canadian Dollar</option>
+                  <option value="AUD">AUD — Australian Dollar</option>
+                  <option value="KES">KES — Kenyan Shilling</option>
+                  <option value="UGX">UGX — Ugandan Shilling</option>
+                  <option value="NGN">NGN — Nigerian Naira</option>
+                  <option value="INR">INR — Indian Rupee</option>
+                  <option value="JPY">JPY — Japanese Yen</option>
+                  <option value="ZAR">ZAR — South African Rand</option>
+                </select>
+                <p class="hint" style="margin-top:6px">Prices are stored in USD and converted with demo exchange rates.</p>
+              </div>
+              <div class="field">
+                <label for="set-auto-approve">Auto-approve books</label>
+                <select id="set-auto-approve">
+                  <option value="no">No — manual review</option>
+                  <option value="yes">Yes — publish immediately</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="set-min-withdraw">Minimum withdrawal (USD)</label>
+                <input id="set-min-withdraw" type="number" min="1" step="0.01" required />
+              </div>
+              <div class="field">
+                <label for="set-tutor-fee">Tutor annual membership (USD)</label>
+                <input id="set-tutor-fee" type="number" min="1" step="0.01" required />
+              </div>
+              <button class="btn btn-leaf" type="submit">Save settings</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- Tutors -->
+        <section class="admin-panel" id="panel-tutors" hidden>
+          <div class="admin-card">
+            <h2>Top tier analysis</h2>
+            <p class="hint">Highest-ranking tutors by students and earnings.</p>
+            <div class="stats admin-stats" id="tutor-stats" style="margin-bottom:18px"></div>
+            <div id="tutor-top-tier"></div>
+          </div>
+
+          <div class="admin-card">
+            <h2>Tutor list</h2>
+            <p class="hint">Search tutors and award rank medals.</p>
+            <div class="field tutor-search-field">
+              <label for="tutor-search">Search tutors</label>
+              <input id="tutor-search" type="search" placeholder="Search by name, email, subjects, phone…" />
+            </div>
+            <div class="table-wrap">
+              <table class="tutor-list-table">
+                <thead>
+                  <tr>
+                    <th>Tutor</th>
+                    <th>Status</th>
+                    <th>Medal</th>
+                    <th>Students</th>
+                    <th>Earnings</th>
+                    <th>Subjects</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tutors-list-body"></tbody>
+              </table>
+            </div>
+            <p class="empty" id="tutors-empty" hidden>No tutor profiles yet.</p>
+          </div>
+
+          <div class="admin-card">
+            <h2>Ban tutors</h2>
+            <p class="hint">
+              Ban tutors who break Folio rules. Banned tutors lose teach access and their courses stop appearing in the catalog.
+            </p>
+            <form id="tutor-ban-form">
+              <p class="form-msg" id="tutor-ban-msg"></p>
+              <div class="field">
+                <label for="ban-tutor-select">Tutor</label>
+                <select id="ban-tutor-select" required>
+                  <option value="">Select a tutor to ban</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="ban-tutor-reason">Reason</label>
+                <textarea id="ban-tutor-reason" required placeholder="Describe the rule violation…"></textarea>
+              </div>
+              <button class="btn btn-dark" type="submit">Ban tutor</button>
+            </form>
+            <div id="banned-tutors-list" style="margin-top:18px"></div>
+            <p class="empty" id="banned-tutors-empty" hidden>No banned tutors.</p>
+          </div>
+        </section>
+
+        <!-- Courses -->
+        <section class="admin-panel" id="panel-courses" hidden>
+          <div class="admin-card">
+            <h2>Instructor applications</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Bio</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="instructors-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="admin-card">
+            <h2>Course video approvals</h2>
+            <p class="hint">Tutors upload chapter videos; approve them before enrolled students can watch.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Course / chapter</th>
+                    <th>Tutor</th>
+                    <th>File</th>
+                    <th>Preview</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="pending-videos-body"></tbody>
+              </table>
+            </div>
+            <p class="empty" id="pending-videos-empty" hidden>No course videos awaiting approval.</p>
+          </div>
+
+          <div class="admin-card">
+            <h2>Course moderation</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Course</th>
+                    <th>Instructor</th>
+                    <th>Price</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="courses-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="admin-card">
+            <h2>Certificate requests</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Learner</th>
+                    <th>Course</th>
+                    <th>Paid</th>
+                    <th>Completed</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="certs-body"></tbody>
+              </table>
+            </div>
+            <p class="empty" id="certs-empty" hidden>No certificate requests yet.</p>
+          </div>
+        </section>
+
+        <!-- Reviews -->
+        <section class="admin-panel" id="panel-reviews" hidden>
+          <div class="admin-card">
+            <h2>Reviews &amp; rating</h2>
+            <p class="hint" id="reviews-summary"></p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Book</th>
+                    <th>Reviewer</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="reviews-body"></tbody>
+              </table>
+            </div>
+            <p class="empty" id="reviews-empty" hidden>No reviews yet.</p>
+          </div>
+        </section>
+
+        <!-- Blog -->
+        <section class="admin-panel" id="panel-blog" hidden>
+          <div class="admin-card">
+            <h2>Write a blog post</h2>
+            <p class="hint">Only admins can publish articles. They appear on the public Blog page.</p>
+            <form id="blog-form">
+              <p class="form-msg" id="blog-form-msg"></p>
+              <div class="field">
+                <label for="blog-title">Title</label>
+                <input id="blog-title" type="text" required placeholder="Article title" />
+              </div>
+              <div class="field">
+                <label for="blog-excerpt">Short excerpt <span class="optional">(optional)</span></label>
+                <input id="blog-excerpt" type="text" placeholder="One-line summary for the blog list" />
+              </div>
+              <div class="field">
+                <label for="blog-cover">Cover image URL <span class="optional">(optional)</span></label>
+                <input id="blog-cover" type="url" placeholder="https://…" />
+              </div>
+              <div class="field">
+                <label for="blog-body">Article</label>
+                <textarea id="blog-body" required placeholder="Write the full article…" style="min-height:180px"></textarea>
+              </div>
+              <button class="btn btn-leaf" type="submit">Publish article</button>
+              <a class="btn btn-light" href="blog.html" target="_blank" rel="noopener">View public blog</a>
+            </form>
+          </div>
+
+          <div class="admin-card">
+            <h2>Published articles</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Published</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="blog-posts-body"></tbody>
+              </table>
+            </div>
+            <p class="empty" id="blog-posts-empty" hidden>No blog posts yet.</p>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/auth.js?v=22"></script>
+  <script>
+    const user = FolioAuth.requireRole("admin", "login.html");
+
+    if (user) {
+      document.getElementById("logout-btn").addEventListener("click", () => {
+        FolioAuth.logout();
+        window.location.href = "login.html";
+      });
+
+      let profitPeriod = "monthly";
+      const nowCal = new Date();
+      let profitCalYear = nowCal.getFullYear();
+      let profitCalMonth = nowCal.getMonth() + 1;
+      let profitRange = { from: "", to: "" };
+
+      const navButtons = [...document.querySelectorAll(".admin-rail-nav [data-panel]")];
+      const panels = {
+        dashboard: document.getElementById("panel-dashboard"),
+        vendors: document.getElementById("panel-vendors"),
+        payments: document.getElementById("panel-payments"),
+        withdrawals: document.getElementById("panel-withdrawals"),
+        disputes: document.getElementById("panel-disputes"),
+        notifications: document.getElementById("panel-notifications"),
+        reviews: document.getElementById("panel-reviews"),
+        tutors: document.getElementById("panel-tutors"),
+        courses: document.getElementById("panel-courses"),
+        blog: document.getElementById("panel-blog"),
+        settings: document.getElementById("panel-settings"),
+      };
+
+      function showPanel(name) {
+        navButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.panel === name));
+        Object.entries(panels).forEach(([key, el]) => {
+          el.hidden = key !== name;
+        });
+        render();
+        if (name === "settings") loadSettingsForm();
+      }
+
+      navButtons.forEach((btn) => {
+        btn.addEventListener("click", () => showPanel(btn.dataset.panel));
+      });
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      }
+
+      function money(n) {
+        return FolioAuth.formatMoney(n);
+      }
+
+      function badge(status) {
+        const map = {
+          pending: "badge-pending",
+          live: "badge-live",
+          rejected: "badge-rejected",
+          sold: "badge-sold",
+          approved: "badge-live",
+          banned: "badge-rejected",
+          none: "badge-pending",
+          completed: "badge-live",
+          requested: "badge-pending",
+          published: "badge-live",
+          hidden: "badge-rejected",
+        };
+        return `<span class="badge ${map[status] || "badge-pending"}">${status}</span>`;
+      }
+
+      function medalBadge(rank) {
+        const value = rank || "none";
+        if (value === "none") return `<span class="medal-badge medal-none">No medal</span>`;
+        const label = FolioAuth.getTutorRankLabel(value);
+        return `<span class="medal-badge medal-${escapeHtml(value)}">${escapeHtml(label)}</span>`;
+      }
+
+      function stars(n) {
+        const rating = Math.max(0, Math.min(5, Number(n) || 0));
+        return "★★★★★☆☆☆☆☆".slice(5 - rating, 10 - rating);
+      }
+
+      function render() {
+        const s = FolioAuth.getAdminStats();
+        const listings = FolioAuth.getListings();
+        const users = FolioAuth.getUsers().filter((u) => u.role === "customer");
+        const orders = FolioAuth.getOrders();
+        const notifications = FolioAuth.getAdminNotifications
+          ? FolioAuth.getAdminNotifications()
+          : FolioAuth.getNotifications().filter((n) => !n.userId);
+        const reviews = FolioAuth.getReviews();
+        const pendingListings = listings.filter((l) => l.status === "pending");
+        const disputes = orders.filter((o) => o.refundStatus === "requested" || o.refundStatus === "pending");
+
+        document.getElementById("sales-overview").innerHTML = `
+          <div class="stat money"><span>Sales overview</span><strong>${money(s.totalRevenue)}</strong><em>All sales through Folio</em></div>
+          <div class="stat"><span>Total products</span><strong>${s.totalProducts}</strong><em>Books listed on the platform</em></div>
+          <div class="stat"><span>Top vendors</span><strong>${(s.topVendors || []).length}</strong><em>Sellers ranked by revenue</em></div>
+          <div class="stat"><span>Total customers</span><strong>${s.totalCustomers}</strong><em>Registered buyers</em></div>
+        `;
+
+        document.querySelectorAll("[data-profit-period]").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.profitPeriod === profitPeriod);
+        });
+        const fromInput = document.getElementById("profit-from");
+        const toInput = document.getElementById("profit-to");
+        if (fromInput && document.activeElement !== fromInput) fromInput.value = profitRange.from || "";
+        if (toInput && document.activeElement !== toInput) toInput.value = profitRange.to || "";
+
+        const profit = FolioAuth.getProfitAnalytics(profitPeriod, profitRange);
+        const rangeActive = !!(profitRange.from || profitRange.to);
+        const periodLabel = rangeActive
+          ? "selected calendar range"
+          : profitPeriod === "daily"
+            ? "today vs prior day"
+            : profitPeriod === "weekly"
+              ? "this week vs prior week"
+              : profitPeriod === "yearly"
+                ? "this year vs prior year"
+                : "this month vs prior month";
+        document.getElementById("profit-stats").innerHTML = `
+          <div class="stat money"><span>Total profit</span><strong>${money(profit.totalProfit)}</strong><em>${
+            rangeActive ? "Fees in selected range" : "All platform fees collected"
+          }</em></div>
+          <div class="stat money"><span>Tutor profit</span><strong>${money(profit.tutorProfit)}</strong><em>${profit.tutorFeePercent}% of course sales</em></div>
+          <div class="stat money"><span>Book profit</span><strong>${money(profit.bookProfit)}</strong><em>${profit.bookFeePercent}% of book sales</em></div>
+          <div class="stat"><span>Latest period</span><strong>${money(profit.latestProfit)}</strong><em>${periodLabel}: ${
+            profit.changePct >= 0 ? "+" : ""
+          }${profit.changePct}%</em></div>
+          <div class="stat"><span>Orders tracked</span><strong>${profit.orderCount}</strong><em>${
+            rangeActive ? "In selected range" : "Across all periods"
+          }</em></div>
+        `;
+
+        const cal = FolioAuth.getProfitCalendarMonth(profitCalYear, profitCalMonth);
+        document.getElementById("profit-cal-label").textContent = cal.monthLabel;
+        const selectedNote = document.getElementById("profit-selected-note");
+        if (rangeActive) {
+          selectedNote.textContent = `Checking ${profitRange.from || "…"} → ${profitRange.to || "…"}. Charts below follow this range.`;
+        } else {
+          selectedNote.textContent = `Calendar month profit: ${money(cal.totalProfit)}. Click any day to inspect it.`;
+        }
+        const maxDay = cal.maxDayProfit || 1;
+        const blanks = (cal.firstDow + 6) % 7; // Monday-first
+        let calHtml = `
+          <div class="profit-cal-weekdays">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+          </div>
+          <div class="profit-cal-grid">`;
+        for (let i = 0; i < blanks; i++) calHtml += `<div class="profit-cal-cell is-empty"></div>`;
+        cal.days.forEach((day) => {
+          const intensity = day.profit > 0 ? Math.max(0.18, day.profit / maxDay) : 0;
+          const selected =
+            profitRange.from === day.date && (!profitRange.to || profitRange.to === day.date) ? " is-selected" : "";
+          const hasProfit = day.profit > 0 ? " has-profit" : "";
+          calHtml += `
+            <button type="button" class="profit-cal-cell${hasProfit}${selected}" data-profit-day="${day.date}"
+              style="${day.profit > 0 ? `--heat:${intensity}` : ""}"
+              title="${day.date}: ${money(day.profit)}">
+              <strong>${day.day}</strong>
+              <span>${day.profit > 0 ? money(day.profit) : "—"}</span>
+            </button>`;
+        });
+        calHtml += `</div>`;
+        document.getElementById("profit-calendar").innerHTML = calHtml;
+        document.querySelectorAll("[data-profit-day]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            profitRange = { from: btn.dataset.profitDay, to: btn.dataset.profitDay };
+            profitPeriod = "daily";
+            render();
+          });
+        });
+
+        const chart = document.getElementById("profit-chart");
+        const bars = document.getElementById("profit-bars");
+        if (!profit.series.length) {
+          chart.innerHTML = `<p class="empty" style="margin:0">No profit data yet for this view.</p>`;
+          bars.innerHTML = "";
+        } else {
+          const maxProfit = Math.max(...profit.series.map((row) => row.profit), 1);
+          const points = profit.series.map((row, idx) => {
+            const x = profit.series.length === 1 ? 50 : (idx / (profit.series.length - 1)) * 100;
+            const y = 100 - (row.profit / maxProfit) * 86 - 6;
+            return `${x},${y}`;
+          });
+          const areaPoints = `0,100 ${points.join(" ")} 100,100`;
+          chart.innerHTML = `
+            <svg class="profit-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <polygon class="profit-area" points="${areaPoints}"></polygon>
+              <polyline class="profit-line" points="${points.join(" ")}" fill="none"></polyline>
+            </svg>
+            <div class="profit-chart-labels">
+              ${profit.series
+                .map(
+                  (row) => `
+                <div class="profit-col">
+                  <div class="profit-col-bar" style="height:${Math.max(6, (row.profit / maxProfit) * 100)}%"></div>
+                  <span>${escapeHtml(row.label)}</span>
+                </div>`
+                )
+                .join("")}
+            </div>`;
+          bars.innerHTML = profit.series
+            .map((row) => {
+              const width = Math.max(4, (row.profit / maxProfit) * 100);
+              return `
+              <div class="bar-row">
+                <div class="bar-row-top">
+                  <span>${escapeHtml(row.label)} · ${row.orders} order${row.orders === 1 ? "" : "s"}</span>
+                  <strong>${money(row.profit)}</strong>
+                </div>
+                <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
+                <div class="profit-split">
+                  <span>Tutor ${money(row.tutorProfit)}</span>
+                  <span>Books ${money(row.bookProfit)}</span>
+                </div>
+              </div>`;
+            })
+            .join("");
+        }
+
+        const topBody = document.getElementById("top-vendors-body");
+        const topEmpty = document.getElementById("top-vendors-empty");
+        if (!(s.topVendors || []).length) {
+          topBody.innerHTML = "";
+          topEmpty.hidden = false;
+        } else {
+          topEmpty.hidden = true;
+          topBody.innerHTML = s.topVendors
+            .map(
+              (v) => `
+            <tr>
+              <td>${escapeHtml(v.sellerName)}</td>
+              <td>${v.sales}</td>
+              <td>${money(v.revenue)}</td>
+              <td>${money(v.payout)}</td>
+            </tr>`
+            )
+            .join("");
+        }
+
+        document.getElementById("stats").innerHTML = `
+          <div class="stat money"><span>Total revenue</span><strong>${money(s.totalRevenue)}</strong><em>All sales made through the platform</em></div>
+          <div class="stat money"><span>Platform earnings</span><strong>${money(s.platformEarnings)}</strong><em>Your commissions and fees</em></div>
+          <div class="stat"><span>Total orders</span><strong>${s.totalOrders}</strong><em>All customer purchases</em></div>
+          <div class="stat"><span>Total books</span><strong>${s.totalBooks}</strong><em>Books listed on the platform</em></div>
+          <div class="stat"><span>Active sellers</span><strong>${s.activeSellers}</strong><em>Approved sellers</em></div>
+          <div class="stat"><span>Pending sellers</span><strong>${s.pendingSellers}</strong><em>Sellers awaiting approval</em></div>
+          <div class="stat"><span>Pending books</span><strong>${s.pendingBooks}</strong><em>Books awaiting moderation</em></div>
+          <div class="stat"><span>Total customers</span><strong>${s.totalCustomers}</strong><em>Registered buyers</em></div>
+          <div class="stat"><span>Completed deliveries</span><strong>${s.completedDeliveries}</strong><em>Successfully delivered orders</em></div>
+          <div class="stat"><span>Refund requests</span><strong>${s.refundRequests}</strong><em>Open refund disputes</em></div>
+        `;
+
+        const pendingBody = document.getElementById("pending-books-body");
+        const pendingEmpty = document.getElementById("pending-books-empty");
+        if (!pendingListings.length) {
+          pendingBody.innerHTML = "";
+          pendingEmpty.hidden = false;
+        } else {
+          pendingEmpty.hidden = true;
+          pendingBody.innerHTML = pendingListings
+            .map(
+              (item) => `
+            <tr>
+              <td><strong>${escapeHtml(item.title)}</strong><br /><span style="color:var(--muted)">${escapeHtml(item.author)}</span></td>
+              <td>${escapeHtml(item.sellerName)}</td>
+              <td>${money(item.price)}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="tiny ok" type="button" data-approve="${item.id}" data-seller="${item.sellerId}">Approve</button>
+                  <button class="tiny" type="button" data-reject="${item.id}">Reject</button>
+                </div>
+              </td>
+            </tr>`
+            )
+            .join("");
+        }
+
+        document.getElementById("vendors-body").innerHTML = users
+          .map(
+            (u) => `
+          <tr>
+            <td>${escapeHtml(u.name)}</td>
+            <td>${escapeHtml(u.email)}</td>
+            <td>${badge(u.sellerStatus || "none")}</td>
+            <td>
+              <div class="row-actions">
+                <button class="tiny ok" type="button" data-approve-seller="${u.id}">Approve</button>
+                <button class="tiny" type="button" data-pend-seller="${u.id}">Pending</button>
+              </div>
+            </td>
+          </tr>`
+          )
+          .join("");
+
+        const listingsBody = document.getElementById("listings-body");
+        const listingsEmpty = document.getElementById("listings-empty");
+        if (!listings.length) {
+          listingsBody.innerHTML = "";
+          listingsEmpty.hidden = false;
+        } else {
+          listingsEmpty.hidden = true;
+          listingsBody.innerHTML = listings
+            .map(
+              (item) => `
+            <tr>
+              <td><strong>${escapeHtml(item.title)}</strong><br /><span style="color:var(--muted)">${escapeHtml(item.author)}</span></td>
+              <td>${escapeHtml(item.sellerName)}</td>
+              <td>${money(item.price)}</td>
+              <td>${badge(item.status)}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="tiny ok" type="button" data-approve="${item.id}" data-seller="${item.sellerId}">Approve</button>
+                  <button class="tiny" type="button" data-reject="${item.id}">Reject</button>
+                  <button class="tiny danger" type="button" data-delete="${item.id}">Delete</button>
+                </div>
+              </td>
+            </tr>`
+            )
+            .join("");
+        }
+
+        const paymentsBody = document.getElementById("payments-body");
+        const paymentsEmpty = document.getElementById("payments-empty");
+        if (!orders.length) {
+          paymentsBody.innerHTML = "";
+          paymentsEmpty.hidden = false;
+        } else {
+          paymentsEmpty.hidden = true;
+          paymentsBody.innerHTML = orders
+            .map(
+              (o) => `
+            <tr>
+              <td><strong>${escapeHtml(o.title)}</strong><br /><span style="color:var(--muted)">${escapeHtml(o.id)}</span></td>
+              <td>${escapeHtml(o.sellerName || "—")}</td>
+              <td>${money(o.amount)}</td>
+              <td>${money(o.platformFee)}</td>
+              <td>${money(o.sellerPayout)}</td>
+              <td>${badge(o.deliveryStatus || "completed")}</td>
+            </tr>`
+            )
+            .join("");
+        }
+
+        const withdrawals = FolioAuth.getWithdrawals();
+        const pendingWd = withdrawals.filter((w) => w.status === "pending");
+        const paidWd = withdrawals.filter((w) => w.status === "paid");
+        const pendingAmt = pendingWd.reduce((sum, w) => sum + Number(w.amount || 0), 0);
+        const paidAmt = paidWd.reduce((sum, w) => sum + Number(w.amount || 0), 0);
+        document.getElementById("withdrawal-stats").innerHTML = `
+          <div class="stat"><span>Pending requests</span><strong>${pendingWd.length}</strong></div>
+          <div class="stat money"><span>Pending amount</span><strong>${money(pendingAmt)}</strong></div>
+          <div class="stat money"><span>Paid out</span><strong>${money(paidAmt)}</strong></div>
+        `;
+
+        const withdrawalsBody = document.getElementById("withdrawals-body");
+        const withdrawalsEmpty = document.getElementById("withdrawals-empty");
+        if (!withdrawals.length) {
+          withdrawalsBody.innerHTML = "";
+          withdrawalsEmpty.hidden = false;
+        } else {
+          withdrawalsEmpty.hidden = true;
+          withdrawalsBody.innerHTML = withdrawals
+            .map(
+              (w) => `
+            <tr>
+              <td>${escapeHtml(w.sellerName)}<br /><span style="color:var(--muted)">${escapeHtml(w.sellerEmail || "")}</span></td>
+              <td>${money(w.amount)}</td>
+              <td>${escapeHtml(w.method || "Bank transfer")}</td>
+              <td>${badge(w.status)}</td>
+              <td>${escapeHtml((w.createdAt || "").slice(0, 10))}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="tiny ok" type="button" data-pay-wd="${w.id}">Mark paid</button>
+                  <button class="tiny" type="button" data-reject-wd="${w.id}">Reject</button>
+                </div>
+              </td>
+            </tr>`
+            )
+            .join("");
+        }
+
+        const disputesBody = document.getElementById("disputes-body");
+        const disputesEmpty = document.getElementById("disputes-empty");
+        if (!disputes.length) {
+          disputesBody.innerHTML = "";
+          disputesEmpty.hidden = false;
+        } else {
+          disputesEmpty.hidden = true;
+          disputesBody.innerHTML = disputes
+            .map(
+              (o) => `
+            <tr>
+              <td><strong>${escapeHtml(o.title)}</strong></td>
+              <td>${escapeHtml(o.sellerName || "—")}</td>
+              <td>${money(o.amount)}</td>
+              <td>${badge(o.refundStatus)}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="tiny ok" type="button" data-clear-refund="${o.id}">Resolve</button>
+                  <button class="tiny" type="button" data-refund="${o.id}">Keep open</button>
+                </div>
+              </td>
+            </tr>`
+            )
+            .join("");
+        }
+
+        // Also show ability to flag refunds from all orders if disputes empty helper
+        if (!disputes.length && orders.length) {
+          disputesEmpty.hidden = true;
+          disputesBody.innerHTML = orders
+            .map(
+              (o) => `
+            <tr>
+              <td><strong>${escapeHtml(o.title)}</strong></td>
+              <td>${escapeHtml(o.sellerName || "—")}</td>
+              <td>${money(o.amount)}</td>
+              <td>${badge(o.refundStatus || "none")}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="tiny" type="button" data-refund="${o.id}">Open dispute</button>
+                  <button class="tiny ok" type="button" data-clear-refund="${o.id}">Resolve</button>
+                </div>
+              </td>
+            </tr>`
+            )
+            .join("");
+        }
+
+        const notes = document.getElementById("notifications-list");
+        if (!notifications.length) {
+          notes.innerHTML = `<p class="empty">No notifications.</p>`;
+        } else {
+          notes.innerHTML = notifications
+            .map((n) => {
+              const target =
+                n.targetGroup === "agents"
+                  ? "Agents"
+                  : n.targetGroup === "tutors"
+                    ? "Tutors"
+                    : "Admin";
+              return `
+            <article class="listing-card">
+              <div class="listing-cover" aria-hidden="true"></div>
+              <div>
+                <h3>${escapeHtml(n.title)} ${n.read ? "" : badge("pending")}</h3>
+                <p>${escapeHtml(n.body)}</p>
+                <p class="hint" style="margin-top:6px">Sent to ${escapeHtml(target)}${
+                  n.createdAt ? ` · ${String(n.createdAt).slice(0, 10)}` : ""
+                }</p>
+              </div>
+              <div class="row-actions">
+                <button class="tiny ok" type="button" data-read="${n.id}">Mark read</button>
+                <button class="tiny danger" type="button" data-del-note="${n.id}">Delete</button>
+              </div>
+            </article>`;
+            })
+            .join("");
+        }
+
+        const instructors = FolioAuth.getUsers().filter(
+          (u) => u.role === "customer" && (u.instructorStatus === "pending" || u.instructorStatus === "approved")
+        );
+        const tutorRows = instructors.map((u) => {
+          const dash = FolioAuth.getTutorDashboard(u.id);
+          return {
+            user: u,
+            dash,
+            haystack: [
+              u.name,
+              u.email,
+              u.instructorPhone,
+              u.instructorSubjects,
+              u.instructorBio,
+              u.instructorCredentials,
+              u.instructorExperience,
+              FolioAuth.getTutorRankLabel(u.tutorRank || "none"),
+            ]
+              .join(" ")
+              .toLowerCase(),
+          };
+        });
+        const approvedTutors = instructors.filter((u) => u.instructorStatus === "approved");
+        const pendingTutors = instructors.filter((u) => u.instructorStatus === "pending");
+        const bannedTutors = instructors.filter((u) => FolioAuth.isTutorBanned(u));
+        const activeMembership = approvedTutors.filter(
+          (u) => FolioAuth.hasActiveTutorMembership(u) && !FolioAuth.isTutorBanned(u)
+        ).length;
+        const leaderboard = FolioAuth.getTutorLeaderboard(5).filter((row) => {
+          const tutor = instructors.find((u) => u.id === row.id);
+          return tutor && !FolioAuth.isTutorBanned(tutor);
+        });
+        const topTutor = leaderboard[0] || null;
+
+        document.getElementById("tutor-stats").innerHTML = `
+          <div class="stat"><span>Total tutors</span><strong>${instructors.length}</strong></div>
+          <div class="stat"><span>Approved</span><strong>${approvedTutors.length}</strong></div>
+          <div class="stat"><span>Pending</span><strong>${pendingTutors.length}</strong></div>
+          <div class="stat"><span>Banned</span><strong>${bannedTutors.length}</strong></div>
+          <div class="stat"><span>Active membership</span><strong>${activeMembership}</strong></div>
+        `;
+
+        const topTier = document.getElementById("tutor-top-tier");
+        topTier.innerHTML = leaderboard.length
+          ? `<div class="table-wrap">
+              <table class="tutor-list-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Tutor</th>
+                    <th>Medal</th>
+                    <th>Students</th>
+                    <th>Earnings</th>
+                    <th>Courses</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${leaderboard
+                    .map((row, idx) => {
+                      const initial = (row.name || "T").trim().charAt(0).toUpperCase();
+                      const photo = row.profileImage
+                        ? `style="background-image:url('${String(row.profileImage).replace(/'/g, "%27")}')"`
+                        : "";
+                      return `
+                      <tr>
+                        <td><strong>#${idx + 1}</strong></td>
+                        <td>
+                          <div class="tutor-list-person">
+                            <span class="profile-avatar profile-avatar-sm ${row.profileImage ? "has-photo" : ""}" ${photo}>${
+                              row.profileImage ? "" : escapeHtml(initial)
+                            }</span>
+                            <span>
+                              <strong>${escapeHtml(row.name)}</strong><br />
+                              <span style="color:var(--muted)">${escapeHtml(row.email)}</span>
+                            </span>
+                          </div>
+                        </td>
+                        <td>${medalBadge(row.tutorRank)}</td>
+                        <td>${row.totalStudents}</td>
+                        <td><span class="bank-money">${money(row.lifetimeCourseEarnings)}</span></td>
+                        <td>${row.totalCourses}</td>
+                      </tr>`;
+                    })
+                    .join("")}
+                </tbody>
+              </table>
+            </div>`
+          : `<p class="empty">No tutors to rank yet.</p>`;
+
+        const searchEl = document.getElementById("tutor-search");
+        const query = String((searchEl && searchEl.value) || "")
+          .trim()
+          .toLowerCase();
+        const filteredRows = query
+          ? tutorRows.filter((row) => row.haystack.includes(query))
+          : tutorRows;
+        const tutorsBody = document.getElementById("tutors-list-body");
+        const tutorsEmpty = document.getElementById("tutors-empty");
+        if (!instructors.length) {
+          tutorsBody.innerHTML = "";
+          tutorsEmpty.hidden = false;
+          tutorsEmpty.textContent = "No tutor profiles yet.";
+        } else if (!filteredRows.length) {
+          tutorsBody.innerHTML = "";
+          tutorsEmpty.hidden = false;
+          tutorsEmpty.textContent = "No tutors match that search.";
+        } else {
+          tutorsEmpty.hidden = true;
+          const rankOptions = FolioAuth.getTutorRankOptions()
+            .map((r) => `<option value="${r.value}">${escapeHtml(r.label)}</option>`)
+            .join("");
+          tutorsBody.innerHTML = filteredRows
+            .map(({ user: u, dash }) => {
+              const initial = (u.name || "T").trim().charAt(0).toUpperCase();
+              const photo = u.profileImage
+                ? `style="background-image:url('${String(u.profileImage).replace(/'/g, "%27")}')"`
+                : "";
+              const membershipActive = FolioAuth.hasActiveTutorMembership(u);
+              return `
+              <tr>
+                <td>
+                  <div class="tutor-list-person">
+                    <span class="profile-avatar profile-avatar-sm ${u.profileImage ? "has-photo" : ""}" ${photo}>${
+                      u.profileImage ? "" : escapeHtml(initial)
+                    }</span>
+                    <span>
+                      <strong>${escapeHtml(u.name || "Tutor")}</strong><br />
+                      <span style="color:var(--muted)">${escapeHtml(u.email || "")}</span><br />
+                      <span style="color:var(--muted)">${escapeHtml(u.instructorPhone || "No phone")}</span>
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  ${FolioAuth.isTutorBanned(u) ? badge("banned") : badge(u.instructorStatus)}<br />
+                  <span style="color:var(--muted);font-size:0.8rem">
+                    ${
+                      FolioAuth.isTutorBanned(u)
+                        ? `Banned · ${escapeHtml((u.tutorBanReason || "").slice(0, 40))}`
+                        : membershipActive
+                          ? `Member · ${(u.instructorMembershipExpiresAt || "").slice(0, 10)}`
+                          : "No active membership"
+                    }
+                  </span>
+                </td>
+                <td>
+                  ${medalBadge(u.tutorRank)}
+                  <select class="tutor-rank-select" data-rank-tutor="${u.id}" aria-label="Award medal for ${escapeHtml(u.name || "tutor")}">
+                    ${rankOptions}
+                  </select>
+                </td>
+                <td>${dash.totalStudents}</td>
+                <td><span class="bank-money">${money(dash.lifetimeCourseEarnings)}</span></td>
+                <td>
+                  <strong>${escapeHtml(u.instructorSubjects || "—")}</strong><br />
+                  <span style="color:var(--muted)">${escapeHtml(u.instructorExperience || "")}</span><br />
+                  <span style="color:var(--muted)">${escapeHtml((u.instructorBio || "").slice(0, 80))}${
+                    (u.instructorBio || "").length > 80 ? "…" : ""
+                  }</span>
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <button class="tiny ok" type="button" data-approve-ins="${u.id}">Approve</button>
+                    <button class="tiny" type="button" data-pend-ins="${u.id}">Pending</button>
+                    ${
+                      FolioAuth.isTutorBanned(u)
+                        ? `<button class="tiny ok" type="button" data-unban-tutor="${u.id}">Unban</button>`
+                        : `<button class="tiny danger" type="button" data-quick-ban="${u.id}">Ban</button>`
+                    }
+                  </div>
+                </td>
+              </tr>`;
+            })
+            .join("");
+
+          tutorsBody.querySelectorAll("[data-rank-tutor]").forEach((select) => {
+            const tutor = instructors.find((u) => u.id === select.dataset.rankTutor);
+            select.value = (tutor && tutor.tutorRank) || "none";
+          });
+        }
+
+        const banSelect = document.getElementById("ban-tutor-select");
+        const banSelectValue = banSelect.value;
+        const bannable = instructors.filter((u) => !FolioAuth.isTutorBanned(u));
+        banSelect.innerHTML =
+          `<option value="">Select a tutor to ban</option>` +
+          bannable
+            .map(
+              (u) =>
+                `<option value="${escapeHtml(u.id)}">${escapeHtml(u.name)} · ${escapeHtml(u.email)}</option>`
+            )
+            .join("");
+        if ([...banSelect.options].some((o) => o.value === banSelectValue)) {
+          banSelect.value = banSelectValue;
+        }
+
+        const bannedBox = document.getElementById("banned-tutors-list");
+        const bannedEmpty = document.getElementById("banned-tutors-empty");
+        if (!bannedTutors.length) {
+          bannedBox.innerHTML = "";
+          bannedEmpty.hidden = false;
+        } else {
+          bannedEmpty.hidden = true;
+          bannedBox.innerHTML = `
+            <div class="table-wrap">
+              <table class="tutor-list-table">
+                <thead>
+                  <tr>
+                    <th>Tutor</th>
+                    <th>Banned on</th>
+                    <th>Reason</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${bannedTutors
+                    .map(
+                      (u) => `
+                    <tr>
+                      <td>
+                        <strong>${escapeHtml(u.name)}</strong><br />
+                        <span style="color:var(--muted)">${escapeHtml(u.email)}</span>
+                      </td>
+                      <td>${escapeHtml((u.tutorBannedAt || "").slice(0, 10) || "—")}</td>
+                      <td>${escapeHtml(u.tutorBanReason || "—")}</td>
+                      <td>
+                        <button class="tiny ok" type="button" data-unban-tutor="${u.id}">Unban</button>
+                      </td>
+                    </tr>`
+                    )
+                    .join("")}
+                </tbody>
+              </table>
+            </div>`;
+        }
+
+        document.getElementById("instructors-body").innerHTML = instructors.length
+          ? instructors
+              .map(
+                (u) => `
+            <tr>
+              <td>${escapeHtml(u.name)} ${medalBadge(u.tutorRank)}</td>
+              <td>${escapeHtml(u.email)}</td>
+              <td>
+                <strong>${escapeHtml(u.instructorSubjects || "—")}</strong><br />
+                <span style="color:var(--muted)">${escapeHtml(u.instructorExperience || "")}</span><br />
+                <span style="color:var(--muted)">${escapeHtml(u.instructorBio || "—")}</span>
+              </td>
+              <td>${badge(u.instructorStatus)}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="tiny ok" type="button" data-approve-ins="${u.id}">Approve</button>
+                  <button class="tiny" type="button" data-pend-ins="${u.id}">Pending</button>
+                </div>
+              </td>
+            </tr>`
+              )
+              .join("")
+          : `<tr><td colspan="5">No instructor applications yet.</td></tr>`;
+
+        const pendingVideos = FolioAuth.getPendingCourseVideos();
+        const pendingVideosBody = document.getElementById("pending-videos-body");
+        const pendingVideosEmpty = document.getElementById("pending-videos-empty");
+        if (!pendingVideos.length) {
+          pendingVideosBody.innerHTML = "";
+          pendingVideosEmpty.hidden = false;
+        } else {
+          pendingVideosEmpty.hidden = true;
+          pendingVideosBody.innerHTML = pendingVideos
+            .map(
+              (c) => `
+            <tr>
+              <td>
+                <strong>${escapeHtml(c.title)}</strong><br />
+                <span style="color:var(--muted)">${escapeHtml(c.chapterTitle || "Chapter")}</span>
+              </td>
+              <td>${escapeHtml(c.instructorName)}</td>
+              <td>
+                ${escapeHtml(c.videoFileName || "lesson.mp4")}
+                ${c.videoFileSize ? `<br /><span style="color:var(--muted)">${Math.round(c.videoFileSize / (1024 * 1024) * 10) / 10} MB</span>` : ""}
+              </td>
+              <td>
+                <video class="admin-video-preview" id="preview-${escapeHtml(c.id.replace(/::/g, "_"))}" controls playsinline preload="metadata"></video>
+              </td>
+              <td>
+                <div class="row-actions">
+                  <button class="tiny ok" type="button" data-approve-video="${escapeHtml(c.courseId)}" data-chapter="${escapeHtml(c.chapterId)}">Approve</button>
+                  <button class="tiny danger" type="button" data-reject-video="${escapeHtml(c.courseId)}" data-chapter="${escapeHtml(c.chapterId)}">Reject</button>
+                </div>
+              </td>
+            </tr>`
+            )
+            .join("");
+          pendingVideos.forEach((c) => {
+            if (!c.videoId) return;
+            FolioAuth.getVideoBlob(c.videoId).then((blob) => {
+              const el = document.getElementById("preview-" + c.id.replace(/::/g, "_"));
+              if (!el || !blob) return;
+              el.src = URL.createObjectURL(blob);
+            });
+          });
+        }
+
+        const allCourses = FolioAuth.getCourses();
+        document.getElementById("courses-body").innerHTML = allCourses.length
+          ? allCourses
+              .map(
+                (c) => `
+            <tr>
+              <td><strong>${escapeHtml(c.title)}</strong><br /><span style="color:var(--muted)">${escapeHtml(c.description || "")}</span></td>
+              <td>${escapeHtml(c.instructorName)}</td>
+              <td>${money(c.price)}</td>
+              <td>${c.durationDays} days</td>
+              <td>${badge(c.status)}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="tiny ok" type="button" data-live-course="${c.id}">Approve</button>
+                  <button class="tiny" type="button" data-reject-course="${c.id}">Reject</button>
+                  <button class="tiny danger" type="button" data-del-course="${c.id}">Delete</button>
+                </div>
+              </td>
+            </tr>`
+              )
+              .join("")
+          : `<tr><td colspan="6">No courses yet.</td></tr>`;
+
+        const certs = FolioAuth.getEnrollments()
+          .map((e) => FolioAuth.refreshEnrollmentProgress(e))
+          .filter((e) => e.certStatus === "requested" || e.certStatus === "issued");
+        const certsBody = document.getElementById("certs-body");
+        const certsEmpty = document.getElementById("certs-empty");
+        if (!certs.length) {
+          certsBody.innerHTML = "";
+          certsEmpty.hidden = false;
+        } else {
+          certsEmpty.hidden = true;
+          certsBody.innerHTML = certs
+            .map(
+              (e) => `
+            <tr>
+              <td>${escapeHtml(e.userName)}<br /><span style="color:var(--muted)">${escapeHtml(e.userEmail || "")}</span></td>
+              <td>${escapeHtml(e.courseTitle)}</td>
+              <td>${money(e.amount)}</td>
+              <td>${escapeHtml((e.endAt || "").slice(0, 10))}</td>
+              <td>${badge(e.certStatus)}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="tiny ok" type="button" data-issue-cert="${e.id}">Issue certificate</button>
+                </div>
+              </td>
+            </tr>`
+            )
+            .join("");
+        }
+
+        const avg =
+          reviews.length > 0
+            ? reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / reviews.length
+            : 0;
+        document.getElementById("reviews-summary").textContent =
+          reviews.length
+            ? `${reviews.length} reviews · average rating ${avg.toFixed(1)} / 5`
+            : "No ratings yet.";
+
+        const reviewsBody = document.getElementById("reviews-body");
+        const reviewsEmpty = document.getElementById("reviews-empty");
+        if (!reviews.length) {
+          reviewsBody.innerHTML = "";
+          reviewsEmpty.hidden = false;
+        } else {
+          reviewsEmpty.hidden = true;
+          reviewsBody.innerHTML = reviews
+            .map(
+              (r) => `
+            <tr>
+              <td>${escapeHtml(r.bookTitle)}</td>
+              <td>${escapeHtml(r.reviewer)}</td>
+              <td>${stars(r.rating)} (${r.rating})</td>
+              <td>${escapeHtml(r.comment)}</td>
+              <td>${badge(r.status)}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="tiny ok" type="button" data-publish="${r.id}">Publish</button>
+                  <button class="tiny" type="button" data-hide="${r.id}">Hide</button>
+                  <button class="tiny danger" type="button" data-del-review="${r.id}">Delete</button>
+                </div>
+              </td>
+            </tr>`
+            )
+            .join("");
+        }
+
+        const blogPosts = FolioAuth.getBlogPosts();
+        const blogBody = document.getElementById("blog-posts-body");
+        const blogEmpty = document.getElementById("blog-posts-empty");
+        if (!blogPosts.length) {
+          blogBody.innerHTML = "";
+          blogEmpty.hidden = false;
+        } else {
+          blogEmpty.hidden = true;
+          blogBody.innerHTML = blogPosts
+            .map(
+              (p) => `
+            <tr>
+              <td>
+                <strong>${escapeHtml(p.title)}</strong><br />
+                <span style="color:var(--muted)">${escapeHtml((p.excerpt || "").slice(0, 90))}${
+                  (p.excerpt || "").length > 90 ? "…" : ""
+                }</span>
+              </td>
+              <td>${escapeHtml(p.authorName || "Admin")}</td>
+              <td>${escapeHtml((p.createdAt || "").slice(0, 10))}</td>
+              <td>
+                <div class="row-actions">
+                  <a class="tiny ok" href="blog-post.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">View</a>
+                  <button class="tiny danger" type="button" data-del-blog="${p.id}">Delete</button>
+                </div>
+              </td>
+            </tr>`
+            )
+            .join("");
+        }
+
+        document.querySelectorAll("[data-approve]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateListing(btn.dataset.approve, { status: "live" });
+            if (btn.dataset.seller) FolioAuth.updateUser(btn.dataset.seller, { sellerStatus: "approved" });
+            FolioAuth.addNotification({
+              id: "n_" + Date.now(),
+              title: "Book approved",
+              body: "A pending book was approved and is now live.",
+              read: false,
+              createdAt: new Date().toISOString(),
+            });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-reject]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateListing(btn.dataset.reject, { status: "rejected" });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-delete]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.deleteListing(btn.dataset.delete);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-approve-seller]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateUser(btn.dataset.approveSeller, { sellerStatus: "approved" });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-pend-seller]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateUser(btn.dataset.pendSeller, { sellerStatus: "pending" });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-refund]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateOrder(btn.dataset.refund, { refundStatus: "requested" });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-clear-refund]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateOrder(btn.dataset.clearRefund, { refundStatus: "none" });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-pay-wd]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateWithdrawal(btn.dataset.payWd, {
+              status: "paid",
+              paidAt: new Date().toISOString(),
+            });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-reject-wd]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateWithdrawal(btn.dataset.rejectWd, { status: "rejected" });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-read]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.markNotificationRead(btn.dataset.read);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-del-note]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.deleteNotification(btn.dataset.delNote);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-publish]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateReview(btn.dataset.publish, { status: "published" });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-hide]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateReview(btn.dataset.hide, { status: "hidden" });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-del-review]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.deleteReview(btn.dataset.delReview);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-del-blog]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            if (!window.confirm("Delete this blog article?")) return;
+            FolioAuth.deleteBlogPost(btn.dataset.delBlog, user.id);
+            render();
+          });
+        });
+
+        document.querySelectorAll("[data-approve-ins]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateUser(btn.dataset.approveIns, { instructorStatus: "approved" });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-pend-ins]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateUser(btn.dataset.pendIns, { instructorStatus: "pending" });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-rank-tutor]").forEach((select) => {
+          select.addEventListener("change", () => {
+            FolioAuth.setTutorRank(select.dataset.rankTutor, select.value);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-quick-ban]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const reason =
+              window.prompt("Ban reason (rule violation)", "Violated Folio tutor rules.") || "";
+            if (!reason.trim()) return;
+            FolioAuth.banTutor({ adminId: user.id, tutorId: btn.dataset.quickBan, reason });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-unban-tutor]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.unbanTutor({ adminId: user.id, tutorId: btn.dataset.unbanTutor });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-live-course]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateCourse(btn.dataset.liveCourse, { status: "live" });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-reject-course]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.updateCourse(btn.dataset.rejectCourse, { status: "rejected" });
+            render();
+          });
+        });
+        document.querySelectorAll("[data-del-course]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.deleteCourse(btn.dataset.delCourse);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-issue-cert]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.issueCertificate(btn.dataset.issueCert);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-approve-video]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            FolioAuth.approveCourseVideo(btn.dataset.approveVideo, btn.dataset.chapter);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-reject-video]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const reason = window.prompt("Rejection reason (optional)", "Needs changes") || "Needs changes";
+            FolioAuth.rejectCourseVideo(btn.dataset.rejectVideo, btn.dataset.chapter, reason);
+            render();
+          });
+        });
+      }
+
+      document.getElementById("notify-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const msg = document.getElementById("notify-msg");
+        const audience = document.getElementById("notify-audience").value;
+        const title = document.getElementById("notify-title").value.trim();
+        const body = document.getElementById("notify-body").value.trim();
+
+        if (audience === "agents") {
+          const result = FolioAuth.notifyAgents({ adminId: user.id, title, body });
+          if (!result.ok) {
+            msg.textContent = result.error;
+            msg.classList.remove("ok");
+            return;
+          }
+          msg.textContent = `Notice pushed to ${result.count} agent account${result.count === 1 ? "" : "s"}.`;
+        } else if (audience === "tutors") {
+          const result = FolioAuth.notifyTutors({ adminId: user.id, title, body });
+          if (!result.ok) {
+            msg.textContent = result.error;
+            msg.classList.remove("ok");
+            return;
+          }
+          msg.textContent = `Notice pushed to ${result.count} tutor account${result.count === 1 ? "" : "s"}.`;
+        } else {
+          FolioAuth.addNotification({
+            title,
+            body,
+            audience: "admin",
+            targetGroup: "admin",
+            fromUserId: user.id,
+            fromUserName: user.name || "Folio Admin",
+          });
+          msg.textContent = "Notification added to admin log.";
+        }
+
+        msg.classList.add("ok");
+        e.target.reset();
+        document.getElementById("notify-audience").value = "admin";
+        render();
+      });
+
+      function loadSettingsForm() {
+        const s = FolioAuth.getSettings();
+        document.getElementById("set-store-name").value = s.storeName || "Folio";
+        document.getElementById("set-support-email").value = s.supportEmail || "help@folio.com";
+        document.getElementById("set-fee").value = s.feePercent ?? 12;
+        document.getElementById("set-tutor-fee-percent").value = s.tutorFeePercent ?? 25;
+        document.getElementById("set-currency").value = s.currency || "USD";
+        document.getElementById("set-auto-approve").value = s.autoApproveBooks || "no";
+        document.getElementById("set-min-withdraw").value = s.minWithdrawal ?? 10;
+        document.getElementById("set-tutor-fee").value = s.tutorAnnualFee ?? 99;
+      }
+
+      document.getElementById("settings-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const currency = document.getElementById("set-currency").value;
+        FolioAuth.saveSettings({
+          storeName: document.getElementById("set-store-name").value.trim(),
+          supportEmail: document.getElementById("set-support-email").value.trim(),
+          feePercent: Number(document.getElementById("set-fee").value),
+          tutorFeePercent: Number(document.getElementById("set-tutor-fee-percent").value),
+          currency,
+          autoApproveBooks: document.getElementById("set-auto-approve").value,
+          minWithdrawal: Number(document.getElementById("set-min-withdraw").value),
+          tutorAnnualFee: Number(document.getElementById("set-tutor-fee").value),
+        });
+        FolioAuth.setDisplayCurrency(currency);
+        const msg = document.getElementById("settings-msg");
+        msg.textContent = "Settings saved.";
+        msg.classList.add("ok");
+        render();
+      });
+
+      document.getElementById("tutor-search").addEventListener("input", () => render());
+
+      document.getElementById("tutor-ban-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const msg = document.getElementById("tutor-ban-msg");
+        const result = FolioAuth.banTutor({
+          adminId: user.id,
+          tutorId: document.getElementById("ban-tutor-select").value,
+          reason: document.getElementById("ban-tutor-reason").value,
+        });
+        if (!result.ok) {
+          msg.textContent = result.error;
+          msg.classList.remove("ok");
+          return;
+        }
+        msg.textContent = "Tutor banned.";
+        msg.classList.add("ok");
+        e.target.reset();
+        render();
+      });
+
+      document.querySelectorAll("[data-profit-period]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          profitPeriod = btn.dataset.profitPeriod;
+          render();
+        });
+      });
+
+      document.getElementById("profit-cal-prev").addEventListener("click", () => {
+        profitCalMonth -= 1;
+        if (profitCalMonth < 1) {
+          profitCalMonth = 12;
+          profitCalYear -= 1;
+        }
+        render();
+      });
+      document.getElementById("profit-cal-next").addEventListener("click", () => {
+        profitCalMonth += 1;
+        if (profitCalMonth > 12) {
+          profitCalMonth = 1;
+          profitCalYear += 1;
+        }
+        render();
+      });
+      document.getElementById("profit-range-apply").addEventListener("click", () => {
+        profitRange = {
+          from: document.getElementById("profit-from").value || "",
+          to: document.getElementById("profit-to").value || "",
+        };
+        if (profitRange.from && profitRange.to && profitRange.from === profitRange.to) {
+          profitPeriod = "daily";
+        } else if (profitRange.from || profitRange.to) {
+          profitPeriod = "daily";
+        }
+        render();
+      });
+      document.getElementById("profit-range-clear").addEventListener("click", () => {
+        profitRange = { from: "", to: "" };
+        render();
+      });
+
+      document.getElementById("blog-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const msg = document.getElementById("blog-form-msg");
+        const result = FolioAuth.createBlogPost({
+          authorId: user.id,
+          authorName: user.name,
+          title: document.getElementById("blog-title").value,
+          excerpt: document.getElementById("blog-excerpt").value,
+          coverImage: document.getElementById("blog-cover").value,
+          body: document.getElementById("blog-body").value,
+        });
+        if (!result.ok) {
+          msg.textContent = result.error;
+          msg.classList.remove("ok");
+          return;
+        }
+        msg.textContent = "Article published.";
+        msg.classList.add("ok");
+        e.target.reset();
+        render();
+      });
+
+      FolioAuth.mountCurrencySelect(document.getElementById("currency-select"), () => render());
+      window.addEventListener("folio:currency", () => render());
+
+      showPanel("dashboard");
+    }
+  </script>
+</body>
+</html>

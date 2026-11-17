@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutor dashboard — Folio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html" aria-label="Folio home">
+        <img src="assets/logo.png" alt="" width="36" height="36" />
+        <strong>Fol<span>io</span></strong>
+      </a>
+      <div class="topbar-actions">
+        <label class="currency-picker">
+          <span class="visually-hidden">Currency</span>
+          <select id="currency-select" aria-label="Display currency"></select>
+        </label>
+        <div class="tutor-wallet" title="Earnings from student course fees">
+          <div class="tutor-wallet-copy">
+            <span>Wallet</span>
+            <strong id="wallet-balance" class="wallet-amount">—</strong>
+          </div>
+          <button class="tutor-wallet-toggle" type="button" id="wallet-toggle" aria-pressed="false">
+            Hide
+          </button>
+        </div>
+        <a class="btn btn-light" href="account.html">Shop account</a>
+        <button class="btn btn-dark" type="button" id="sign-out">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <header class="tutor-dash-head">
+      <div id="admin-notice-banner" class="admin-notice-banner" hidden></div>
+      <div>
+        <p class="school-kicker">Tutor workspace</p>
+        <h1 class="page-title" id="tutor-greeting">Tutor dashboard</h1>
+        <p class="page-sub" id="membership-note"></p>
+      </div>
+    </header>
+
+    <div class="account-layout">
+      <nav class="account-nav" aria-label="Tutor sections">
+        <button type="button" class="active" data-panel="courses">Courses</button>
+        <button type="button" data-panel="classes">Classes</button>
+        <button type="button" data-panel="students">My students</button>
+        <button type="button" data-panel="progress">Chapter progress</button>
+        <button type="button" data-panel="wallet">Wallet</button>
+        <button type="button" data-panel="notifications">
+          Notifications <span id="tutor-notif-count" class="nav-count" hidden></span>
+        </button>
+        <button type="button" data-panel="messages">Messages</button>
+        <button type="button" data-panel="profile">My profile</button>
+      </nav>
+
+      <div class="account-main">
+        <!-- Courses -->
+        <section class="account-panel" id="panel-courses">
+          <section class="tutor-stats" aria-label="Teaching overview">
+            <article>
+              <span>Your courses</span>
+              <strong id="stat-courses">0</strong>
+            </article>
+            <article>
+              <span>Students enrolled</span>
+              <strong id="stat-students">0</strong>
+            </article>
+            <article>
+              <span>Live courses</span>
+              <strong id="stat-live">0</strong>
+            </article>
+            <article>
+              <span>Lifetime earned</span>
+              <strong id="stat-earned" class="bank-money">—</strong>
+            </article>
+          </section>
+
+          <div class="tutor-layout">
+            <section class="panel">
+              <h2>Your courses</h2>
+              <p class="hint" style="margin-top:0">Students and earnings update when learners pay to enroll.</p>
+              <div id="course-list"></div>
+            </section>
+
+            <section class="panel">
+              <h2>Create a course</h2>
+              <form id="course-form">
+                <p class="form-msg" id="course-form-msg"></p>
+                <div class="field">
+                  <label for="course-title">Course title</label>
+                  <input id="course-title" type="text" required />
+                </div>
+                <div class="field">
+                  <label for="course-desc">Description</label>
+                  <textarea id="course-desc" required></textarea>
+                </div>
+                <div class="field">
+                  <label for="course-price">Price (USD base)</label>
+                  <input id="course-price" type="number" min="1" step="0.01" required />
+                </div>
+                <div class="field">
+                  <label for="course-days">Learning duration (days)</label>
+                  <input id="course-days" type="number" min="30" step="1" required />
+                  <p class="hint" style="margin:6px 0 0">Minimum 30 days.</p>
+                </div>
+                <button class="btn btn-leaf" type="submit">Submit for review</button>
+              </form>
+            </section>
+          </div>
+        </section>
+
+        <!-- Classes: chapters + live calendar -->
+        <section class="account-panel" id="panel-classes" hidden>
+          <div class="panel">
+            <h2>Classes</h2>
+            <p class="hint" style="margin-top:0;margin-bottom:16px">
+              Add chapters with videos and a test after each chapter. Students must pass to unlock the next chapter. Or switch to Go live with a calendar date and time.
+            </p>
+            <form id="class-form">
+              <p class="form-msg" id="class-form-msg"></p>
+              <div class="field">
+                <label for="class-course">Course</label>
+                <select id="class-course" required>
+                  <option value="">Select a course</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="class-type">Class format</label>
+                <select id="class-type" required>
+                  <option value="video">Recorded chapters</option>
+                  <option value="live">Go live</option>
+                  <option value="both">Chapters + go live</option>
+                </select>
+              </div>
+
+              <div id="video-field">
+                <div class="chapter-builder">
+                  <h3>Chapters</h3>
+                  <p class="hint" style="margin-top:0">
+                    Add a chapter and upload its lesson video (MP4, WebM, MOV · up to 80MB). Videos go to admin for approval before students can watch.
+                  </p>
+                  <div class="chapter-add-block">
+                    <div class="chapter-add-row">
+                      <input id="chapter-title" type="text" placeholder="Chapter title, e.g. Intro to watercolor" />
+                      <button class="btn btn-light" type="button" id="add-chapter-btn">Add chapter</button>
+                    </div>
+                    <div class="chapter-add-video">
+                      <label class="btn btn-dark chapter-file-btn" for="chapter-new-video">Choose lesson video</label>
+                      <input id="chapter-new-video" type="file" accept="video/*" hidden />
+                      <span class="hint" id="chapter-new-video-name">Optional — attach a video now or upload later</span>
+                    </div>
+                  </div>
+                  <p class="form-msg" id="chapter-form-msg"></p>
+                  <div id="chapter-list"></div>
+                </div>
+              </div>
+
+              <div id="zoom-field">
+                <div class="live-schedule-box">
+                  <h3>Go live</h3>
+                  <p class="hint" style="margin-top:0">Pick when class is available. Saving notifies enrolled students with the date and time.</p>
+                  <div class="field">
+                    <label for="class-live-at">Date &amp; time</label>
+                    <input id="class-live-at" type="datetime-local" />
+                  </div>
+                  <div class="field">
+                    <label for="class-zoom">Zoom / live class link</label>
+                    <input id="class-zoom" type="url" placeholder="https://zoom.us/j/..." />
+                  </div>
+                  <div class="field">
+                    <label for="class-schedule">Extra notes <span class="optional">(optional)</span></label>
+                    <textarea id="class-schedule" placeholder="e.g. Bring sketchbook, session lasts 90 minutes"></textarea>
+                  </div>
+                  <label class="check-row" for="class-notify">
+                    <input id="class-notify" type="checkbox" checked />
+                    <span>Notify enrolled students when I save this live schedule</span>
+                  </label>
+                </div>
+              </div>
+
+              <button class="btn btn-leaf" type="submit">Save class setup</button>
+            </form>
+            <div id="class-list" style="margin-top:22px"></div>
+          </div>
+        </section>
+
+        <!-- My students -->
+        <section class="account-panel" id="panel-students" hidden>
+          <div class="panel">
+            <h2>My students</h2>
+            <p class="hint" style="margin-top:0;margin-bottom:16px">
+              Everyone enrolled in your courses. Open Messages to push notes to their accounts.
+            </p>
+            <div id="students-list"></div>
+          </div>
+        </section>
+
+        <!-- Chapter progress sheet -->
+        <section class="account-panel" id="panel-progress" hidden>
+          <div class="panel">
+            <h2>Chapter progress</h2>
+            <p class="hint" style="margin-top:0;margin-bottom:16px">
+              Excel-style sheet of who passed each chapter test and can continue to the next chapter.
+            </p>
+            <div class="field">
+              <label for="progress-course">Course</label>
+              <select id="progress-course">
+                <option value="">Select a course</option>
+              </select>
+            </div>
+            <div id="progress-sheet"></div>
+          </div>
+        </section>
+
+        <!-- Wallet -->
+        <section class="account-panel" id="panel-wallet" hidden>
+          <div class="panel">
+            <h2>Wallet</h2>
+            <p class="hint" style="margin-top:0;margin-bottom:16px">
+              Student course fees land here after Folio’s tutor fee (<span id="wallet-fee-note">25%</span>). Request a withdrawal when you are ready to cash out.
+            </p>
+            <div class="tutor-wallet-hero">
+              <div>
+                <span class="tutor-wallet-hero-label">Available balance</span>
+                <strong id="wallet-available" class="wallet-amount">—</strong>
+              </div>
+              <div class="withdraw-with-icon">
+                <img class="withdraw-icon" src="assets/withdraw-icon.png" alt="" width="28" height="28" />
+                <button class="btn btn-leaf" type="button" id="wallet-withdraw-focus">Withdraw</button>
+              </div>
+            </div>
+            <div class="tutor-stats" style="margin-top:16px;margin-bottom:0">
+              <article>
+                <span>Lifetime earned</span>
+                <strong id="wallet-lifetime" class="bank-money">—</strong>
+              </article>
+              <article>
+                <span>Students paid</span>
+                <strong id="wallet-students">0</strong>
+              </article>
+              <article>
+                <span>Membership</span>
+                <strong id="wallet-membership">—</strong>
+              </article>
+            </div>
+
+            <div class="wallet-withdraw-box" id="wallet-withdraw-box">
+              <h3>Request withdrawal</h3>
+              <p class="hint" style="margin-top:0;margin-bottom:12px">
+                Available: <strong id="wallet-withdraw-available" class="wallet-amount-inline">—</strong>
+              </p>
+              <form id="tutor-withdraw-form">
+                <p class="form-msg" id="tutor-withdraw-msg"></p>
+                <div class="field">
+                  <label for="tutor-withdraw-amount">Amount (USD base)</label>
+                  <input id="tutor-withdraw-amount" type="number" min="1" step="0.01" required />
+                </div>
+                <div class="field">
+                  <label for="tutor-withdraw-method">Method</label>
+                  <select id="tutor-withdraw-method">
+                    <option>Bank transfer</option>
+                    <option>PayPal</option>
+                    <option>Mobile money</option>
+                  </select>
+                </div>
+                <button class="btn btn-leaf" type="submit">Request withdrawal</button>
+              </form>
+            </div>
+
+            <div id="wallet-withdrawals" style="margin-top:18px"></div>
+            <div id="wallet-orders" style="margin-top:18px"></div>
+          </div>
+        </section>
+
+        <!-- Notifications (inbox from admin / platform) -->
+        <section class="account-panel" id="panel-notifications" hidden>
+          <div class="panel">
+            <h2>Notifications</h2>
+            <p class="hint" style="margin-top:0;margin-bottom:16px">
+              Notices from Folio admin and platform updates appear here.
+            </p>
+            <div id="tutor-notifications"></div>
+          </div>
+        </section>
+
+        <!-- Messages -->
+        <section class="account-panel" id="panel-messages" hidden>
+          <div class="panel">
+            <h2>Messages</h2>
+            <p class="hint" style="margin-top:0;margin-bottom:16px">
+              Push notifications to student accounts. They appear under Account → Notifications.
+            </p>
+
+            <form id="notify-all-form" class="tutor-notify-form">
+              <p class="form-msg" id="notify-all-msg"></p>
+              <div class="grid-2">
+                <div class="field">
+                  <label for="notify-all-title">Notification title</label>
+                  <input id="notify-all-title" type="text" required placeholder="Class update" />
+                </div>
+                <div class="field">
+                  <label for="notify-all-course">Send to</label>
+                  <select id="notify-all-course">
+                    <option value="">All students</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="notify-all-body">Message</label>
+                <textarea id="notify-all-body" required placeholder="Write a note for your learners…"></textarea>
+              </div>
+              <div class="field">
+                <label for="notify-one-student">Or choose one student</label>
+                <select id="notify-one-student">
+                  <option value="">Send to group above</option>
+                </select>
+              </div>
+              <button class="btn btn-dark" type="submit">Send message</button>
+            </form>
+
+            <h2 style="margin-top:24px">Sent messages</h2>
+            <div id="sent-messages"></div>
+          </div>
+        </section>
+
+        <!-- My profile -->
+        <section class="account-panel" id="panel-profile" hidden>
+          <div class="panel">
+            <h2>My profile</h2>
+            <p class="hint" style="margin-top:0;margin-bottom:16px">
+              Keep your tutor details up to date for learners and admin review.
+            </p>
+            <form id="profile-form">
+              <p class="form-msg" id="profile-msg"></p>
+              <div class="profile-photo-row">
+                <div class="profile-avatar" id="profile-avatar" aria-hidden="true"></div>
+                <div class="profile-photo-actions">
+                  <label for="profile-image">Profile photo</label>
+                  <p class="hint" style="margin:4px 0 10px">JPG, PNG, or WebP · up to 5MB</p>
+                  <div class="profile-photo-buttons">
+                    <label class="btn btn-light profile-file-btn" for="profile-image">Choose photo</label>
+                    <input id="profile-image" type="file" accept="image/*" hidden />
+                    <button class="btn btn-light" type="button" id="profile-image-remove">Remove</button>
+                  </div>
+                </div>
+              </div>
+              <div class="grid-2">
+                <div class="field">
+                  <label for="profile-name">Full name</label>
+                  <input id="profile-name" type="text" required />
+                </div>
+                <div class="field">
+                  <label for="profile-phone">Phone</label>
+                  <input id="profile-phone" type="tel" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="profile-email">Email</label>
+                <input id="profile-email" type="email" disabled />
+              </div>
+              <div class="field">
+                <label for="profile-subjects">Subjects</label>
+                <input id="profile-subjects" type="text" />
+              </div>
+              <div class="grid-2">
+                <div class="field">
+                  <label for="profile-experience">Experience</label>
+                  <input id="profile-experience" type="text" />
+                </div>
+                <div class="field">
+                  <label for="profile-credentials">Credentials</label>
+                  <input id="profile-credentials" type="text" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="profile-bio">Teaching bio</label>
+                <textarea id="profile-bio"></textarea>
+              </div>
+              <div class="field">
+                <label for="profile-website">Portfolio / website</label>
+                <input id="profile-website" type="url" placeholder="https://" />
+              </div>
+              <button class="btn btn-leaf" type="submit">Save profile</button>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/auth.js?v=23"></script>
+  <script>
+    const user = FolioAuth.requireAuth("login.html");
+    if (!user) throw new Error("auth required");
+
+    if (!FolioAuth.canAccessTeachSection(user)) {
+      window.location.href = "account.html#teach";
+      throw new Error("teach access required");
+    }
+
+    const WALLET_HIDE_KEY = "folio_tutor_wallet_hidden";
+    let walletHidden = localStorage.getItem(WALLET_HIDE_KEY) === "1";
+    let latestWalletBalance = 0;
+
+    const navButtons = [...document.querySelectorAll(".account-nav [data-panel]")];
+    const panels = {
+      courses: document.getElementById("panel-courses"),
+      classes: document.getElementById("panel-classes"),
+      students: document.getElementById("panel-students"),
+      progress: document.getElementById("panel-progress"),
+      wallet: document.getElementById("panel-wallet"),
+      notifications: document.getElementById("panel-notifications"),
+      messages: document.getElementById("panel-messages"),
+      profile: document.getElementById("panel-profile"),
+    };
+
+    function money(n) {
+      return FolioAuth.formatMoney(n);
+    }
+
+    function renderWalletBalance() {
+      const balanceEl = document.getElementById("wallet-balance");
+      const toggle = document.getElementById("wallet-toggle");
+      balanceEl.textContent = walletHidden ? "••••••" : money(latestWalletBalance);
+      toggle.textContent = walletHidden ? "Show" : "Hide";
+      toggle.setAttribute("aria-pressed", walletHidden ? "true" : "false");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function badge(status) {
+      const map = {
+        pending: "badge-pending",
+        live: "badge-live",
+        rejected: "badge-rejected",
+        approved: "badge-live",
+        active: "badge-live",
+        completed: "badge-sold",
+        paid: "badge-live",
+      };
+      return `<span class="badge ${map[status] || "badge-pending"}">${escapeHtml(status)}</span>`;
+    }
+
+    function showPanel(name) {
+      navButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.panel === name));
+      Object.entries(panels).forEach(([key, el]) => {
+        el.hidden = key !== name;
+      });
+      if (name === "courses") renderCourses();
+      if (name === "classes") renderClasses();
+      if (name === "students") renderStudents();
+      if (name === "progress") renderProgress();
+      if (name === "wallet") renderWallet();
+      if (name === "notifications") renderInbox();
+      if (name === "messages") renderMessages();
+      if (name === "profile") renderProfile();
+    }
+
+    function updateNotifBadge() {
+      const fresh = FolioAuth.getCurrentUser() || user;
+      const count = FolioAuth.getUnreadNotificationCount(fresh.id);
+      const el = document.getElementById("tutor-notif-count");
+      if (!el) return;
+      if (count > 0) {
+        el.hidden = false;
+        el.textContent = String(count);
+      } else {
+        el.hidden = true;
+        el.textContent = "";
+      }
+    }
+
+    function renderInbox() {
+      const fresh = FolioAuth.getCurrentUser() || user;
+      const box = document.getElementById("tutor-notifications");
+      const notes = FolioAuth.getNotificationsForUser(fresh.id);
+      updateNotifBadge();
+      if (!notes.length) {
+        box.innerHTML = `<p class="empty">No notifications yet.</p>`;
+        return;
+      }
+      box.innerHTML = notes
+        .map(
+          (n) => `
+          <article class="listing-card">
+            <div class="listing-cover" aria-hidden="true"></div>
+            <div>
+              <h3>${escapeHtml(n.title)} ${n.read ? "" : badge("pending")}</h3>
+              <p>${escapeHtml(n.body)}</p>
+              <p class="hint" style="margin-top:6px">
+                ${
+                  n.targetGroup === "tutors" || n.targetGroup === "agents"
+                    ? "From Folio"
+                    : n.fromUserName
+                      ? `From ${escapeHtml(n.fromUserName)}`
+                      : "Folio"
+                }
+                · ${(n.createdAt || "").slice(0, 10)}
+              </p>
+            </div>
+            <div class="row-actions">
+              ${n.read ? "" : `<button class="tiny ok" type="button" data-read-note="${n.id}">Mark read</button>`}
+              <button class="tiny danger" type="button" data-del-note="${n.id}">Delete</button>
+            </div>
+          </article>`
+        )
+        .join("");
+
+      box.querySelectorAll("[data-read-note]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          FolioAuth.markNotificationRead(btn.dataset.readNote);
+          renderInbox();
+          renderAdminNoticeBanner();
+        });
+      });
+      box.querySelectorAll("[data-del-note]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          FolioAuth.deleteNotification(btn.dataset.delNote);
+          renderInbox();
+          renderAdminNoticeBanner();
+        });
+      });
+    }
+
+    function syncClassFields() {
+      const type = document.getElementById("class-type").value;
+      document.getElementById("video-field").hidden = !(type === "video" || type === "both");
+      document.getElementById("zoom-field").hidden = !(type === "live" || type === "both");
+    }
+
+    function deliveryLabel(type) {
+      if (type === "video") return "Recorded chapters";
+      if (type === "live") return "Go live";
+      if (type === "both") return "Chapters + live";
+      return "Not set";
+    }
+
+    function videoStatusLabel(status) {
+      if (status === "pending") return "Pending admin approval";
+      if (status === "approved") return "Approved";
+      if (status === "rejected") return "Rejected — upload again";
+      return "No video uploaded";
+    }
+
+    function videoStatusBadge(status) {
+      const value = status || "none";
+      const label = videoStatusLabel(value);
+      const cls =
+        value === "approved"
+          ? "badge-live"
+          : value === "pending"
+            ? "badge-pending"
+            : value === "rejected"
+              ? "badge-rejected"
+              : "badge-pending";
+      return `<span class="badge ${cls}">${escapeHtml(label)}</span>`;
+    }
+
+    function selectedCourse() {
+      const fresh = FolioAuth.getCurrentUser() || user;
+      const id = document.getElementById("class-course").value;
+      return FolioAuth.getCoursesByInstructor(fresh.id).find((c) => c.id === id) || null;
+    }
+
+    async function uploadChapterFile(courseId, chapterId, file, statusEl) {
+      if (!file) {
+        if (statusEl) {
+          statusEl.textContent = "Choose a video file first.";
+          statusEl.classList.remove("ok");
+        }
+        return { ok: false };
+      }
+      if (statusEl) {
+        statusEl.textContent = `Uploading ${file.name}…`;
+        statusEl.classList.remove("ok");
+      }
+      const fresh = FolioAuth.getCurrentUser() || user;
+      const result = await FolioAuth.uploadChapterVideo({
+        instructorId: fresh.id,
+        courseId,
+        chapterId,
+        videoFile: file,
+      });
+      if (!result.ok) {
+        if (statusEl) {
+          statusEl.textContent = result.error;
+          statusEl.classList.remove("ok");
+        }
+        return result;
+      }
+      if (statusEl) {
+        statusEl.textContent = "Chapter video uploaded — waiting for admin approval.";
+        statusEl.classList.add("ok");
+      }
+      return result;
+    }
+
+    async function renderChapterEditor() {
+      const box = document.getElementById("chapter-list");
+      const course = selectedCourse();
+      if (!course) {
+        box.innerHTML = `<p class="empty">Select a course to manage chapters.</p>`;
+        return;
+      }
+      const chapters = FolioAuth.getCourseChapters(course);
+      if (!chapters.length) {
+        box.innerHTML = `<p class="empty">No chapters yet. Add your first chapter above and upload a lesson video.</p>`;
+        return;
+      }
+
+      const previewUrls = {};
+      await Promise.all(
+        chapters.map(async (ch) => {
+          if (!ch.videoId) return;
+          try {
+            const blob = await FolioAuth.getVideoBlob(ch.videoId);
+            if (blob) previewUrls[ch.id] = URL.createObjectURL(blob);
+          } catch (_) {}
+        })
+      );
+
+      box.innerHTML = chapters
+        .map((ch) => {
+          const canUpload = !ch.legacy;
+          const test = FolioAuth.getChapterTest(course, ch.id) || { passScore: 70, questions: [] };
+          const qCount = test.questions.length;
+          const hasVideo = !!(ch.videoId && ch.videoStatus && ch.videoStatus !== "none");
+          const sizeLabel = ch.videoFileSize ? FolioAuth.formatFileSize(ch.videoFileSize) : "";
+          const uploadLabel = hasVideo ? "Replace video" : "Upload video";
+          return `
+            <article class="chapter-card" data-chapter="${escapeHtml(ch.id)}">
+              <div class="chapter-card-head">
+                <div>
+                  <strong>Chapter ${escapeHtml(String(ch.order || ""))}: ${escapeHtml(ch.title)}</strong>
+                  <p class="hint" style="margin:6px 0 0">
+                    ${videoStatusBadge(ch.videoStatus || "none")}
+                    ${ch.videoFileName ? ` · ${escapeHtml(ch.videoFileName)}` : ""}
+                    ${sizeLabel ? ` · ${escapeHtml(sizeLabel)}` : ""}
+                    · Test: ${qCount ? qCount + " question" + (qCount === 1 ? "" : "s") : "not set"}
+                  </p>
+                </div>
+                ${
+                  canUpload
+                    ? `<button class="tiny danger" type="button" data-remove-chapter="${escapeHtml(ch.id)}">Remove</button>`
+                    : ""
+                }
+              </div>
+              ${
+                canUpload
+                  ? `<div class="chapter-video-panel">
+                      <div class="chapter-video-panel-head">
+                        <strong>Lesson video</strong>
+                        <span class="hint">MP4, WebM, or MOV · up to 80MB</span>
+                      </div>
+                      ${
+                        previewUrls[ch.id]
+                          ? `<video class="chapter-video-preview" controls preload="metadata" src="${previewUrls[ch.id]}"></video>`
+                          : `<div class="chapter-video-empty">${
+                              hasVideo
+                                ? "Video stored — preview unavailable on this device."
+                                : "No lesson video yet. Choose a file and upload it for this chapter."
+                            }</div>`
+                      }
+                      ${
+                        ch.videoStatus === "rejected" && ch.videoRejectReason
+                          ? `<p class="form-msg" style="margin:8px 0 0">${escapeHtml(ch.videoRejectReason)}</p>`
+                          : ""
+                      }
+                      <div class="chapter-upload-row">
+                        <label class="btn btn-dark chapter-file-btn" for="chapter-file-${escapeHtml(ch.id)}">Choose video</label>
+                        <input id="chapter-file-${escapeHtml(ch.id)}" type="file" accept="video/*" data-chapter-file="${escapeHtml(ch.id)}" hidden />
+                        <span class="hint" data-chapter-file-name="${escapeHtml(ch.id)}">No new file selected</span>
+                        <button class="btn btn-leaf" type="button" data-upload-chapter="${escapeHtml(ch.id)}">${uploadLabel}</button>
+                      </div>
+                      <p class="form-msg" data-chapter-upload-msg="${escapeHtml(ch.id)}"></p>
+                    </div>
+                    <div class="chapter-test-box">
+                      <div class="chapter-card-head">
+                        <strong>Chapter test</strong>
+                        <button class="tiny" type="button" data-add-question="${escapeHtml(ch.id)}">Add question</button>
+                      </div>
+                      <p class="hint" style="margin:6px 0 10px">Students must pass this test before the next chapter unlocks.</p>
+                      <div class="field" style="margin-bottom:10px">
+                        <label>Pass score (%)</label>
+                        <input type="number" min="1" max="100" value="${escapeHtml(String(test.passScore || 70))}" data-pass-score="${escapeHtml(ch.id)}" />
+                      </div>
+                      <div data-questions="${escapeHtml(ch.id)}">
+                        ${
+                          test.questions.length
+                            ? test.questions
+                                .map(
+                                  (q, qi) => `
+                          <div class="test-question" data-q-index="${qi}">
+                            <div class="field">
+                              <label>Question ${qi + 1}</label>
+                              <input type="text" value="${escapeHtml(q.prompt)}" data-q-prompt />
+                            </div>
+                            <div class="test-options">
+                              ${(q.options || [])
+                                .map(
+                                  (opt, oi) => `
+                                <label class="test-option">
+                                  <input type="radio" name="ans-${escapeHtml(ch.id)}-${qi}" value="${oi}" ${
+                                    Number(q.answerIndex) === oi ? "checked" : ""
+                                  } data-q-answer />
+                                  <input type="text" value="${escapeHtml(opt)}" data-q-option placeholder="Option ${oi + 1}" />
+                                </label>`
+                                )
+                                .join("")}
+                            </div>
+                            <button class="tiny danger" type="button" data-remove-question="${qi}">Remove question</button>
+                          </div>`
+                                )
+                                .join("")
+                            : `<p class="empty">No questions yet.</p>`
+                        }
+                      </div>
+                      <button class="btn btn-leaf" type="button" data-save-test="${escapeHtml(ch.id)}" style="margin-top:10px">Save chapter test</button>
+                    </div>`
+                  : `<p class="hint">Legacy single video — add a new chapter to manage uploads and tests here.</p>`
+              }
+            </article>`;
+        })
+        .join("");
+
+      box.querySelectorAll("[data-remove-chapter]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const fresh = FolioAuth.getCurrentUser() || user;
+          const result = FolioAuth.removeCourseChapter({
+            instructorId: fresh.id,
+            courseId: course.id,
+            chapterId: btn.dataset.removeChapter,
+          });
+          const msg = document.getElementById("chapter-form-msg");
+          if (!result.ok) {
+            msg.textContent = result.error;
+            msg.classList.remove("ok");
+            return;
+          }
+          msg.textContent = "Chapter removed.";
+          msg.classList.add("ok");
+          renderChapterEditor();
+          renderClasses();
+        });
+      });
+
+      box.querySelectorAll("[data-chapter-file]").forEach((input) => {
+        input.addEventListener("change", () => {
+          const chapterId = input.dataset.chapterFile;
+          const label = box.querySelector(`[data-chapter-file-name="${chapterId}"]`);
+          const file = input.files && input.files[0] ? input.files[0] : null;
+          if (!label) return;
+          label.textContent = file
+            ? `${file.name} · ${FolioAuth.formatFileSize(file.size)}`
+            : "No new file selected";
+        });
+      });
+
+      box.querySelectorAll("[data-upload-chapter]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const chapterId = btn.dataset.uploadChapter;
+          const input = box.querySelector(`[data-chapter-file="${chapterId}"]`);
+          const file = input && input.files && input.files[0] ? input.files[0] : null;
+          const statusEl =
+            box.querySelector(`[data-chapter-upload-msg="${chapterId}"]`) ||
+            document.getElementById("chapter-form-msg");
+          btn.disabled = true;
+          const result = await uploadChapterFile(course.id, chapterId, file, statusEl);
+          btn.disabled = false;
+          if (!result.ok) return;
+          if (input) input.value = "";
+          renderChapterEditor();
+          renderClasses();
+        });
+      });
+
+      box.querySelectorAll("[data-add-question]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest(".chapter-card");
+          const host = card.querySelector(`[data-questions="${btn.dataset.addQuestion}"]`);
+          const empty = host.querySelector(".empty");
+          if (empty) empty.remove();
+          const qi = host.querySelectorAll(".test-question").length;
+          const wrap = document.createElement("div");
+          wrap.className = "test-question";
+          wrap.dataset.qIndex = String(qi);
+          wrap.innerHTML = `
+            <div class="field">
+              <label>Question ${qi + 1}</label>
+              <input type="text" data-q-prompt placeholder="Question text" />
+            </div>
+            <div class="test-options">
+              ${[0, 1, 2, 3]
+                .map(
+                  (oi) => `
+                <label class="test-option">
+                  <input type="radio" name="ans-${btn.dataset.addQuestion}-${qi}" value="${oi}" ${oi === 0 ? "checked" : ""} data-q-answer />
+                  <input type="text" data-q-option placeholder="Option ${oi + 1}" />
+                </label>`
+                )
+                .join("")}
+            </div>
+            <button class="tiny danger" type="button" data-remove-question="${qi}">Remove question</button>`;
+          host.appendChild(wrap);
+          wrap.querySelector("[data-remove-question]").addEventListener("click", () => {
+            wrap.remove();
+          });
+        });
+      });
+
+      box.querySelectorAll("[data-remove-question]").forEach((btn) => {
+        btn.addEventListener("click", () => btn.closest(".test-question").remove());
+      });
+
+      box.querySelectorAll("[data-save-test]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const chapterId = btn.dataset.saveTest;
+          const card = btn.closest(".chapter-card");
+          const passScore = card.querySelector(`[data-pass-score="${chapterId}"]`).value;
+          const questions = [...card.querySelectorAll(`[data-questions="${chapterId}"] .test-question`)].map(
+            (block) => {
+              const prompt = block.querySelector("[data-q-prompt]").value;
+              const options = [...block.querySelectorAll("[data-q-option]")].map((el) => el.value);
+              const checked = block.querySelector("[data-q-answer]:checked");
+              return {
+                prompt,
+                options,
+                answerIndex: checked ? Number(checked.value) : 0,
+              };
+            }
+          );
+          const fresh = FolioAuth.getCurrentUser() || user;
+          const result = FolioAuth.saveChapterTest({
+            instructorId: fresh.id,
+            courseId: course.id,
+            chapterId,
+            passScore,
+            questions,
+          });
+          const msg = document.getElementById("chapter-form-msg");
+          if (!result.ok) {
+            msg.textContent = result.error;
+            msg.classList.remove("ok");
+            return;
+          }
+          msg.textContent = "Chapter test saved.";
+          msg.classList.add("ok");
+          renderChapterEditor();
+        });
+      });
+    }
+
+    function renderProgress() {
+      const { fresh, dash } = refreshHeader();
+      const select = document.getElementById("progress-course");
+      const current = select.value;
+      select.innerHTML =
+        `<option value="">Select a course</option>` +
+        dash.courses
+          .map((c) => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.title)}</option>`)
+          .join("");
+      if ([...select.options].some((o) => o.value === current)) select.value = current;
+
+      const sheet = document.getElementById("progress-sheet");
+      const courseId = select.value;
+      if (!courseId) {
+        sheet.innerHTML = `<p class="empty">Select a course to view the pass sheet.</p>`;
+        return;
+      }
+
+      const data = FolioAuth.getChapterProgressSheet(fresh.id, courseId);
+      if (!data.ok) {
+        sheet.innerHTML = `<p class="empty">${escapeHtml(data.error)}</p>`;
+        return;
+      }
+      if (!data.chapters.length) {
+        sheet.innerHTML = `<p class="empty">This course has no chapters yet.</p>`;
+        return;
+      }
+      if (!data.rows.length) {
+        sheet.innerHTML = `<p class="empty">No students enrolled in this course yet.</p>`;
+        return;
+      }
+
+      sheet.innerHTML = `
+        <div class="sheet-wrap">
+          <table class="progress-sheet">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Email</th>
+                ${data.chapters
+                  .map((ch) => `<th>${escapeHtml(ch.title)}${ch.hasTest ? "" : "<br /><span class='hint'>No test</span>"}</th>`)
+                  .join("")}
+                <th>Can continue</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.rows
+                .map((row) => {
+                  let unlockedNext = true;
+                  const cells = data.chapters
+                    .map((ch, idx) => {
+                      const cell = row.cells[ch.id] || {};
+                      if (idx > 0 && !data.chapters.slice(0, idx).every((prev) => (row.cells[prev.id] || {}).passed)) {
+                        unlockedNext = false;
+                      }
+                      if (cell.passed) {
+                        return `<td class="sheet-pass">Pass${cell.score != null ? ` (${cell.score}%)` : ""}</td>`;
+                      }
+                      if (cell.attempts) {
+                        return `<td class="sheet-fail">Not passed${cell.score != null ? ` (${cell.score}%)` : ""}</td>`;
+                      }
+                      return `<td class="sheet-pending">—</td>`;
+                    })
+                    .join("");
+                  const allPassed = data.chapters.every((ch) => (row.cells[ch.id] || {}).passed);
+                  const continueLabel = allPassed
+                    ? "All chapters passed"
+                    : unlockedNext || (row.cells[data.chapters[0].id] || {}).passed || data.chapters.length === 1
+                      ? "In progress"
+                      : "Blocked";
+                  return `
+                    <tr>
+                      <td><strong>${escapeHtml(row.userName)}</strong></td>
+                      <td>${escapeHtml(row.userEmail)}</td>
+                      ${cells}
+                      <td>${escapeHtml(continueLabel)}</td>
+                    </tr>`;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    function getAdminTutorNotices(userId) {
+      return FolioAuth.getNotificationsForUser(userId).filter(
+        (n) => n.targetGroup === "tutors" && !n.read
+      );
+    }
+
+    function renderAdminNoticeBanner() {
+      const fresh = FolioAuth.getCurrentUser() || user;
+      const banner = document.getElementById("admin-notice-banner");
+      const notices = getAdminTutorNotices(fresh.id);
+      updateNotifBadge();
+      if (!notices.length) {
+        banner.hidden = true;
+        banner.innerHTML = "";
+        return;
+      }
+      banner.hidden = false;
+      banner.innerHTML = notices
+        .map(
+          (n) => `
+          <article class="admin-notice-card" data-admin-notice="${escapeHtml(n.id)}">
+            <strong>${escapeHtml(n.title)}</strong>
+            <p>${escapeHtml(n.body)}</p>
+            <p class="admin-notice-meta">
+              From Folio
+              · ${(n.createdAt || "").slice(0, 10)}
+            </p>
+            <div class="admin-notice-actions">
+              <button class="tiny ok" type="button" data-dismiss-admin-notice="${escapeHtml(n.id)}">Dismiss</button>
+            </div>
+          </article>`
+        )
+        .join("");
+
+      banner.querySelectorAll("[data-dismiss-admin-notice]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          FolioAuth.markNotificationRead(btn.dataset.dismissAdminNotice);
+          renderAdminNoticeBanner();
+          if (document.getElementById("panel-notifications") && !panels.notifications.hidden) {
+            renderInbox();
+          }
+        });
+      });
+    }
+
+    function refreshHeader() {
+      const fresh = FolioAuth.getCurrentUser() || user;
+      const dash = FolioAuth.getTutorDashboard(fresh.id);
+      document.getElementById("tutor-greeting").textContent = `Hi, ${fresh.name.split(" ")[0]}`;
+      document.getElementById("membership-note").textContent =
+        `Membership active until ${(fresh.instructorMembershipExpiresAt || "").slice(0, 10)}.`;
+      latestWalletBalance = dash.walletBalance;
+      renderWalletBalance();
+      renderAdminNoticeBanner();
+      return { fresh, dash };
+    }
+
+    function renderCourses() {
+      const { dash } = refreshHeader();
+      document.getElementById("stat-courses").textContent = String(dash.totalCourses);
+      document.getElementById("stat-students").textContent = String(dash.totalStudents);
+      document.getElementById("stat-live").textContent = String(dash.liveCourses);
+      document.getElementById("stat-earned").textContent = money(dash.lifetimeCourseEarnings);
+
+      const list = document.getElementById("course-list");
+      if (!dash.courses.length) {
+        list.innerHTML = `<p class="empty">No courses yet. Create your first class on the right.</p>`;
+        return;
+      }
+      list.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Course</th>
+                <th>Status</th>
+                <th>Students</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dash.courses
+                .map(
+                  (c) => `
+                <tr>
+                  <td>
+                    <strong>${escapeHtml(c.title)}</strong><br />
+                    <span style="color:var(--muted)">${c.durationDays} days</span>
+                  </td>
+                  <td>${badge(c.status)}</td>
+                  <td><strong>${c.studentCount}</strong> enrolled</td>
+                  <td>${money(c.price)}</td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    function renderClasses() {
+      const { fresh, dash } = refreshHeader();
+      const select = document.getElementById("class-course");
+      const current = select.value;
+      select.innerHTML =
+        `<option value="">Select a course</option>` +
+        dash.courses
+          .map((c) => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.title)}</option>`)
+          .join("");
+      if ([...select.options].some((o) => o.value === current)) select.value = current;
+
+      const list = document.getElementById("class-list");
+      if (!dash.courses.length) {
+        list.innerHTML = `<p class="empty">Create a course first, then set video or Zoom delivery here.</p>`;
+        syncClassFields();
+        return;
+      }
+
+      list.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Course</th>
+                <th>Format</th>
+                <th>Chapters / Live</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dash.courses
+                .map((c) => {
+                  const chapters = FolioAuth.getCourseChapters(c);
+                  const bits = [];
+                  if (chapters.length) {
+                    bits.push(
+                      chapters
+                        .map(
+                          (ch) =>
+                            `${escapeHtml(ch.title)} · ${badge(ch.videoStatus || "none")}`
+                        )
+                        .join("<br />")
+                    );
+                  } else {
+                    bits.push("No chapters yet");
+                  }
+                  if (c.liveAt) {
+                    bits.push(`Live: ${escapeHtml(FolioAuth.formatLiveAt(c.liveAt))}`);
+                  }
+                  if (c.zoomUrl) {
+                    bits.push(`<a href="${escapeHtml(c.zoomUrl)}" target="_blank" rel="noopener">Zoom link</a>`);
+                  }
+                  return `
+                    <tr>
+                      <td>
+                        <strong>${escapeHtml(c.title)}</strong>
+                        ${c.classSchedule ? `<br /><span style="color:var(--muted)">${escapeHtml(c.classSchedule)}</span>` : ""}
+                      </td>
+                      <td>${escapeHtml(deliveryLabel(c.deliveryType))}</td>
+                      <td>${bits.join("<br />")}</td>
+                    </tr>`;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        </div>`;
+      syncClassFields();
+      renderChapterEditor();
+    }
+
+    function renderStudents() {
+      const { fresh } = refreshHeader();
+      const students = FolioAuth.getTutorStudents(fresh.id);
+      const list = document.getElementById("students-list");
+      if (!students.length) {
+        list.innerHTML = `<p class="empty">No students have joined your courses yet.</p>`;
+        return;
+      }
+      list.innerHTML = students
+        .map((student) => {
+          const courses = student.courses
+            .map((c) => `${escapeHtml(c.courseTitle)} ${badge(c.status)}`)
+            .join("<br />");
+          return `
+            <article class="listing-card">
+              <div class="listing-cover" aria-hidden="true"></div>
+              <div>
+                <h3>${escapeHtml(student.userName || "Student")}</h3>
+                <p>${escapeHtml(student.userEmail || "")}</p>
+                <p style="margin-top:8px">${courses}</p>
+              </div>
+              <div class="row-actions">
+                <button class="tiny ok" type="button" data-msg-student="${escapeHtml(student.userId)}">Message</button>
+              </div>
+            </article>`;
+        })
+        .join("");
+
+      list.querySelectorAll("[data-msg-student]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          showPanel("messages");
+          document.getElementById("notify-one-student").value = btn.dataset.msgStudent;
+        });
+      });
+    }
+
+    function renderWallet() {
+      const { fresh, dash } = refreshHeader();
+      const feePct = Number((FolioAuth.getTutorFeeRate() * 100).toFixed(1));
+      document.getElementById("wallet-fee-note").textContent = `${feePct}%`;
+      const available = money(dash.walletBalance);
+      document.getElementById("wallet-available").textContent = available;
+      document.getElementById("wallet-withdraw-available").textContent = available;
+      document.getElementById("wallet-lifetime").textContent = money(dash.lifetimeCourseEarnings);
+      document.getElementById("wallet-students").textContent = String(dash.totalStudents);
+      document.getElementById("wallet-membership").textContent = (
+        fresh.instructorMembershipExpiresAt || ""
+      ).slice(0, 10) || "—";
+      document.getElementById("tutor-withdraw-amount").max = String(dash.walletBalance || 0);
+
+      const withdrawals = FolioAuth.getWithdrawals()
+        .filter((w) => w.sellerId === fresh.id)
+        .slice(0, 12);
+      const wdBox = document.getElementById("wallet-withdrawals");
+      wdBox.innerHTML = withdrawals.length
+        ? `<h3 style="margin:0 0 10px;font-size:1rem">Withdrawal history</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${withdrawals
+                  .map(
+                    (w) => `
+                  <tr>
+                    <td>${(w.createdAt || "").slice(0, 10)}</td>
+                    <td><span class="wallet-amount-inline">${money(w.amount || 0)}</span></td>
+                    <td>${escapeHtml(w.method || "—")}</td>
+                    <td>${badge(w.status)}</td>
+                  </tr>`
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>`
+        : `<p class="empty">No withdrawal requests yet.</p>`;
+
+      const orders = FolioAuth.getOrders()
+        .filter((o) => o.sellerId === fresh.id && o.type === "course")
+        .slice(0, 12);
+      const box = document.getElementById("wallet-orders");
+      if (!orders.length) {
+        box.innerHTML = `<p class="empty">No student fee payments yet.</p>`;
+        return;
+      }
+      box.innerHTML = `
+        <h3 style="margin:0 0 10px;font-size:1rem">Recent course payouts</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Payment</th>
+                <th>Date</th>
+                <th>Payout</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orders
+                .map(
+                  (o) => `
+                <tr>
+                  <td>${escapeHtml(o.title || "Course payment")}</td>
+                  <td>${(o.createdAt || "").slice(0, 10)}</td>
+                  <td><span class="wallet-amount-inline">${money(o.sellerPayout || 0)}</span></td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    function renderMessages() {
+      const { fresh, dash } = refreshHeader();
+      const students = FolioAuth.getTutorStudents(fresh.id);
+      const courseSelect = document.getElementById("notify-all-course");
+      const studentSelect = document.getElementById("notify-one-student");
+      const courseVal = courseSelect.value;
+      const studentVal = studentSelect.value;
+
+      courseSelect.innerHTML =
+        `<option value="">All students</option>` +
+        dash.courses
+          .map(
+            (c) =>
+              `<option value="${escapeHtml(c.id)}">${escapeHtml(c.title)} (${c.studentCount})</option>`
+          )
+          .join("");
+      studentSelect.innerHTML =
+        `<option value="">Send to group above</option>` +
+        students
+          .map(
+            (s) =>
+              `<option value="${escapeHtml(s.userId)}">${escapeHtml(s.userName)} · ${escapeHtml(s.userEmail || "")}</option>`
+          )
+          .join("");
+
+      if ([...courseSelect.options].some((o) => o.value === courseVal)) courseSelect.value = courseVal;
+      if ([...studentSelect.options].some((o) => o.value === studentVal)) studentSelect.value = studentVal;
+
+      const sent = FolioAuth.getNotifications()
+        .filter((n) => n.fromUserId === fresh.id)
+        .slice(0, 20);
+      const box = document.getElementById("sent-messages");
+      if (!sent.length) {
+        box.innerHTML = `<p class="empty">No messages sent yet.</p>`;
+        return;
+      }
+      box.innerHTML = sent
+        .map(
+          (n) => `
+          <article class="listing-card">
+            <div class="listing-cover" aria-hidden="true"></div>
+            <div>
+              <h3>${escapeHtml(n.title)}</h3>
+              <p>${escapeHtml(n.body)}</p>
+              <p class="hint" style="margin-top:6px">
+                ${(n.createdAt || "").slice(0, 10)}
+                ${n.courseTitle ? ` · ${escapeHtml(n.courseTitle)}` : ""}
+              </p>
+            </div>
+          </article>`
+        )
+        .join("");
+    }
+
+    function renderProfile() {
+      const { fresh } = refreshHeader();
+      document.getElementById("profile-name").value = fresh.name || "";
+      document.getElementById("profile-phone").value = fresh.instructorPhone || "";
+      document.getElementById("profile-email").value = fresh.email || "";
+      document.getElementById("profile-subjects").value = fresh.instructorSubjects || "";
+      document.getElementById("profile-experience").value = fresh.instructorExperience || "";
+      document.getElementById("profile-credentials").value = fresh.instructorCredentials || "";
+      document.getElementById("profile-bio").value = fresh.instructorBio || "";
+      document.getElementById("profile-website").value = fresh.instructorWebsite || "";
+      const avatar = document.getElementById("profile-avatar");
+      const initial = (fresh.name || "T").trim().charAt(0).toUpperCase();
+      if (fresh.profileImage) {
+        avatar.style.backgroundImage = `url("${fresh.profileImage}")`;
+        avatar.textContent = "";
+        avatar.classList.add("has-photo");
+      } else {
+        avatar.style.backgroundImage = "";
+        avatar.textContent = initial;
+        avatar.classList.remove("has-photo");
+      }
+    }
+
+    navButtons.forEach((btn) => {
+      btn.addEventListener("click", () => showPanel(btn.dataset.panel));
+    });
+
+    document.getElementById("wallet-toggle").addEventListener("click", () => {
+      walletHidden = !walletHidden;
+      localStorage.setItem(WALLET_HIDE_KEY, walletHidden ? "1" : "0");
+      renderWalletBalance();
+    });
+
+    document.getElementById("progress-course").addEventListener("change", renderProgress);
+
+    function openWalletWithdraw() {
+      showPanel("wallet");
+      const box = document.getElementById("wallet-withdraw-box");
+      box.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("tutor-withdraw-amount").focus();
+    }
+
+    document.getElementById("wallet-withdraw-focus").addEventListener("click", openWalletWithdraw);
+
+    document.getElementById("tutor-withdraw-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("tutor-withdraw-msg");
+      const fresh = FolioAuth.getCurrentUser() || user;
+      const result = FolioAuth.requestWithdrawal({
+        sellerId: fresh.id,
+        sellerName: fresh.name,
+        sellerEmail: fresh.email,
+        amount: document.getElementById("tutor-withdraw-amount").value,
+        method: document.getElementById("tutor-withdraw-method").value,
+        source: "tutor",
+      });
+      if (!result.ok) {
+        msg.textContent = result.error;
+        msg.classList.remove("ok");
+        return;
+      }
+      msg.textContent = "Withdrawal requested. Waiting for admin payout.";
+      msg.classList.add("ok");
+      e.target.reset();
+      renderWallet();
+    });
+
+    document.getElementById("notify-all-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("notify-all-msg");
+      const fresh = FolioAuth.getCurrentUser() || user;
+      const oneStudent = document.getElementById("notify-one-student").value;
+      const title = document.getElementById("notify-all-title").value;
+      const body = document.getElementById("notify-all-body").value;
+      const courseId = document.getElementById("notify-all-course").value || null;
+
+      const result = oneStudent
+        ? FolioAuth.notifyStudent({
+            tutorId: fresh.id,
+            studentId: oneStudent,
+            title,
+            body,
+            courseId,
+          })
+        : FolioAuth.notifyTutorStudents({
+            tutorId: fresh.id,
+            title,
+            body,
+            courseId,
+          });
+
+      if (!result.ok) {
+        msg.textContent = result.error;
+        msg.classList.remove("ok");
+        return;
+      }
+      msg.textContent = oneStudent
+        ? "Message sent to that student’s account."
+        : `Message pushed to ${result.count} student account${result.count === 1 ? "" : "s"}.`;
+      msg.classList.add("ok");
+      e.target.reset();
+      renderMessages();
+    });
+
+    document.getElementById("class-type").addEventListener("change", syncClassFields);
+    document.getElementById("class-course").addEventListener("change", () => {
+      const course = selectedCourse();
+      if (!course) {
+        renderChapterEditor();
+        return;
+      }
+      document.getElementById("class-type").value =
+        course.deliveryType === "unset" || !course.deliveryType ? "video" : course.deliveryType;
+      document.getElementById("class-zoom").value = course.zoomUrl || "";
+      document.getElementById("class-live-at").value = FolioAuth.toDatetimeLocalValue(course.liveAt || "");
+      document.getElementById("class-schedule").value = course.classSchedule || "";
+      document.getElementById("class-notify").checked = true;
+      document.getElementById("chapter-form-msg").textContent = "";
+      syncClassFields();
+      renderChapterEditor();
+    });
+
+    document.getElementById("chapter-new-video").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+      const label = document.getElementById("chapter-new-video-name");
+      label.textContent = file
+        ? `${file.name} · ${FolioAuth.formatFileSize(file.size)}`
+        : "Optional — attach a video now or upload later";
+    });
+
+    document.getElementById("add-chapter-btn").addEventListener("click", async () => {
+      const msg = document.getElementById("chapter-form-msg");
+      const course = selectedCourse();
+      if (!course) {
+        msg.textContent = "Select a course first.";
+        msg.classList.remove("ok");
+        return;
+      }
+      const titleInput = document.getElementById("chapter-title");
+      const videoInput = document.getElementById("chapter-new-video");
+      const videoFile = videoInput.files && videoInput.files[0] ? videoInput.files[0] : null;
+      const fresh = FolioAuth.getCurrentUser() || user;
+      const result = FolioAuth.addCourseChapter({
+        instructorId: fresh.id,
+        courseId: course.id,
+        title: titleInput.value,
+      });
+      if (!result.ok) {
+        msg.textContent = result.error;
+        msg.classList.remove("ok");
+        return;
+      }
+
+      titleInput.value = "";
+      if (videoFile) {
+        const upload = await uploadChapterFile(course.id, result.chapter.id, videoFile, msg);
+        videoInput.value = "";
+        document.getElementById("chapter-new-video-name").textContent =
+          "Optional — attach a video now or upload later";
+        if (!upload.ok) {
+          renderChapterEditor();
+          renderClasses();
+          return;
+        }
+      } else {
+        msg.textContent = "Chapter added. Upload its lesson video below.";
+        msg.classList.add("ok");
+      }
+      renderChapterEditor();
+      renderClasses();
+    });
+
+    document.getElementById("class-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("class-form-msg");
+      const fresh = FolioAuth.getCurrentUser() || user;
+      msg.textContent = "Saving…";
+      msg.classList.remove("ok");
+      const result = await FolioAuth.saveCourseDelivery({
+        instructorId: fresh.id,
+        courseId: document.getElementById("class-course").value,
+        deliveryType: document.getElementById("class-type").value,
+        zoomUrl: document.getElementById("class-zoom").value,
+        liveAt: document.getElementById("class-live-at").value,
+        classSchedule: document.getElementById("class-schedule").value,
+        notifyStudents: document.getElementById("class-notify").checked,
+      });
+      if (!result.ok) {
+        msg.textContent = result.error;
+        msg.classList.remove("ok");
+        return;
+      }
+      const type = document.getElementById("class-type").value;
+      if ((type === "live" || type === "both") && result.notified) {
+        msg.textContent = `Live class saved. Notified ${result.notified} student${result.notified === 1 ? "" : "s"}.`;
+      } else if (type === "live" || type === "both") {
+        msg.textContent = "Live class schedule saved.";
+      } else {
+        msg.textContent = "Class setup saved. Upload chapter videos for admin approval.";
+      }
+      msg.classList.add("ok");
+      renderClasses();
+    });
+
+    document.getElementById("course-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("course-form-msg");
+      const current = FolioAuth.getCurrentUser() || user;
+      const result = FolioAuth.createCourse({
+        instructorId: current.id,
+        instructorName: current.name,
+        title: document.getElementById("course-title").value,
+        description: document.getElementById("course-desc").value,
+        price: document.getElementById("course-price").value,
+        durationDays: document.getElementById("course-days").value,
+      });
+      if (!result.ok) {
+        msg.textContent = result.error;
+        msg.classList.remove("ok");
+        return;
+      }
+      msg.textContent = "Course submitted for admin review.";
+      msg.classList.add("ok");
+      e.target.reset();
+      renderCourses();
+    });
+
+    document.getElementById("profile-image").addEventListener("change", async (e) => {
+      const msg = document.getElementById("profile-msg");
+      const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+      const fresh = FolioAuth.getCurrentUser() || user;
+      msg.textContent = "Uploading photo…";
+      msg.classList.remove("ok");
+      const result = await FolioAuth.saveProfileImage(fresh.id, file);
+      e.target.value = "";
+      if (!result.ok) {
+        msg.textContent = result.error;
+        return;
+      }
+      msg.textContent = "Profile photo updated.";
+      msg.classList.add("ok");
+      renderProfile();
+      refreshHeader();
+    });
+
+    document.getElementById("profile-image-remove").addEventListener("click", () => {
+      const msg = document.getElementById("profile-msg");
+      const fresh = FolioAuth.getCurrentUser() || user;
+      FolioAuth.removeProfileImage(fresh.id);
+      msg.textContent = "Profile photo removed.";
+      msg.classList.add("ok");
+      renderProfile();
+      refreshHeader();
+    });
+
+    document.getElementById("profile-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("profile-msg");
+      const fresh = FolioAuth.getCurrentUser() || user;
+      FolioAuth.updateUser(fresh.id, {
+        name: document.getElementById("profile-name").value.trim(),
+        instructorPhone: document.getElementById("profile-phone").value.trim(),
+        instructorSubjects: document.getElementById("profile-subjects").value.trim(),
+        instructorExperience: document.getElementById("profile-experience").value.trim(),
+        instructorCredentials: document.getElementById("profile-credentials").value.trim(),
+        instructorBio: document.getElementById("profile-bio").value.trim(),
+        instructorWebsite: document.getElementById("profile-website").value.trim(),
+      });
+      msg.textContent = "Profile saved.";
+      msg.classList.add("ok");
+      renderProfile();
+      refreshHeader();
+    });
+
+    document.getElementById("sign-out").addEventListener("click", () => {
+      FolioAuth.logout();
+      window.location.href = "login.html";
+    });
+
+    FolioAuth.mountCurrencySelect(document.getElementById("currency-select"), () => {
+      const active = document.querySelector(".account-nav [data-panel].active");
+      if (active) showPanel(active.dataset.panel);
+      else refreshHeader();
+    });
+    window.addEventListener("folio:currency", () => {
+      const active = document.querySelector(".account-nav [data-panel].active");
+      if (active) showPanel(active.dataset.panel);
+      else refreshHeader();
+    });
+
+    updateNotifBadge();
+
+    const hash = (location.hash || "").replace("#", "");
+    if (panels[hash]) showPanel(hash);
+    else showPanel("courses");
+  </script>
+</body>
+</html>

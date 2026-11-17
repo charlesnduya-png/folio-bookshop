@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in — Folio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html" aria-label="Folio home">
+        <img src="assets/logo.png" alt="" width="36" height="36" />
+        <strong>Fol<span>io</span></strong>
+      </a>
+      <div class="topbar-actions">
+        <label class="currency-picker">
+          <span class="visually-hidden">Currency</span>
+          <select id="currency-select" aria-label="Display currency"></select>
+        </label>
+        <a class="btn btn-light" href="index.html">Keep browsing</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell signup-shell">
+    <h1 class="page-title">Welcome to Folio</h1>
+    <p class="page-sub" id="page-sub">
+      Browse freely. Create an account only when you buy a book or join a course. Tutors use a special application.
+    </p>
+
+    <div class="tabs" role="tablist">
+      <button type="button" class="active" data-tab="login">Sign in</button>
+      <button type="button" data-tab="register">Create account</button>
+      <button type="button" data-tab="instructor">Tutor application</button>
+    </div>
+
+    <div class="panel" id="login-panel">
+      <form id="login-form">
+        <p class="form-msg" id="login-msg"></p>
+        <div class="field">
+          <label for="login-email">Email</label>
+          <input id="login-email" type="email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" autocomplete="current-password" required />
+        </div>
+        <button class="btn btn-dark" type="submit" style="width:100%">Sign in</button>
+      </form>
+      <p class="hint">
+        Demo customer: <code>reader@folio.com</code> / <code>reader123</code><br />
+        Demo tutor: <code>tutor@folio.com</code> / <code>tutor123</code><br />
+        Demo admin: <code>admin@folio.com</code> / <code>admin123</code>
+      </p>
+    </div>
+
+    <div class="panel" id="register-panel" hidden>
+      <p class="hint" style="margin-top:0">
+        Learner accounts are for checkout and course enrollment. You can browse shops and courses without signing up.
+      </p>
+      <form id="register-form">
+        <p class="form-msg" id="register-msg"></p>
+        <div class="field">
+          <label for="reg-name">Full name</label>
+          <input id="reg-name" type="text" autocomplete="name" required />
+        </div>
+        <div class="field">
+          <label for="reg-email">Email</label>
+          <input id="reg-email" type="email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="reg-password">Password</label>
+          <input id="reg-password" type="password" autocomplete="new-password" required minlength="6" />
+        </div>
+        <button class="btn btn-leaf" type="submit" style="width:100%">Create learner account</button>
+      </form>
+    </div>
+
+    <div class="panel" id="instructor-panel" hidden>
+      <p class="hint" style="margin-top:0">
+        Special tutor signup. Share your teaching background for admin review. After approval, pay an annual membership to unlock Teach courses.
+      </p>
+      <form id="instructor-form" class="tutor-form">
+        <p class="form-msg" id="instructor-msg"></p>
+
+        <h2 class="signup-section-title">Account</h2>
+        <div class="grid-2">
+          <div class="field">
+            <label for="ins-name">Full name</label>
+            <input id="ins-name" type="text" autocomplete="name" required />
+          </div>
+          <div class="field">
+            <label for="ins-phone">Phone number</label>
+            <input id="ins-phone" type="tel" autocomplete="tel" required />
+          </div>
+        </div>
+        <div class="field">
+          <label for="ins-email">Email</label>
+          <input id="ins-email" type="email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="ins-password">Password</label>
+          <input id="ins-password" type="password" autocomplete="new-password" required minlength="6" />
+        </div>
+
+        <h2 class="signup-section-title">Teaching profile</h2>
+        <div class="field">
+          <label for="ins-subjects">Subjects you want to teach</label>
+          <input id="ins-subjects" type="text" required placeholder="e.g. Creative writing, poetry, book clubs" />
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="ins-experience">Years of teaching experience</label>
+            <input id="ins-experience" type="text" required placeholder="e.g. 5 years" />
+          </div>
+          <div class="field">
+            <label for="ins-credentials">Credentials / education</label>
+            <input id="ins-credentials" type="text" required placeholder="e.g. MA Literature, CELTA" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="ins-bio">Teaching bio</label>
+          <textarea id="ins-bio" required placeholder="Who you teach, your style, and what learners can expect."></textarea>
+        </div>
+        <div class="field">
+          <label for="ins-motivation">Why teach on Folio?</label>
+          <textarea id="ins-motivation" required placeholder="Tell us why you want to offer courses here."></textarea>
+        </div>
+        <div class="field">
+          <label for="ins-website">Portfolio or website <span class="optional">(optional)</span></label>
+          <input id="ins-website" type="url" placeholder="https://" />
+        </div>
+
+        <button class="btn btn-leaf" type="submit" style="width:100%">Submit tutor application</button>
+      </form>
+    </div>
+  </main>
+
+  <script src="js/auth.js?v=7"></script>
+  <script>
+    function safeNext() {
+      const raw = new URLSearchParams(location.search).get("next") || "";
+      if (!raw || raw.includes("://") || raw.startsWith("//") || raw.startsWith("\\")) return "";
+      return raw;
+    }
+
+    function goAfterAuth(user) {
+      const next = safeNext();
+      if (next) {
+        window.location.href = next;
+        return;
+      }
+      window.location.href = user.role === "admin" ? "admin.html" : "account.html";
+    }
+
+    const existing = FolioAuth.getCurrentUser();
+    if (existing) goAfterAuth(existing);
+
+    const tabs = document.querySelectorAll("[data-tab]");
+    const panels = {
+      login: document.getElementById("login-panel"),
+      register: document.getElementById("register-panel"),
+      instructor: document.getElementById("instructor-panel"),
+    };
+    const pageSub = document.getElementById("page-sub");
+
+    function showTab(name) {
+      tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+      Object.entries(panels).forEach(([key, el]) => {
+        el.hidden = key !== name;
+      });
+      if (name === "instructor") {
+        pageSub.textContent =
+          "Tutor accounts need a full application. An admin reviews your profile before you can publish courses.";
+      } else if (name === "register") {
+        pageSub.textContent =
+          "Create a learner account when you are ready to buy a book or join a course. Browsing stays open without signup.";
+      } else {
+        pageSub.textContent =
+          "Browse freely. Create an account only when you buy a book or join a course. Tutors use a special application.";
+      }
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => showTab(tab.dataset.tab));
+    });
+
+    function applyRoute() {
+      const hash = location.hash.replace("#", "");
+      const tabParam = new URLSearchParams(location.search).get("tab");
+      const name = hash || tabParam || "";
+      if (name && panels[name]) {
+        showTab(name);
+        return;
+      }
+      if (safeNext()) {
+        showTab("register");
+        return;
+      }
+      showTab("login");
+    }
+
+    applyRoute();
+    window.addEventListener("hashchange", applyRoute);
+
+    document.getElementById("login-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("login-msg");
+      const result = FolioAuth.login(
+        document.getElementById("login-email").value,
+        document.getElementById("login-password").value
+      );
+      if (!result.ok) {
+        msg.textContent = result.error;
+        msg.classList.remove("ok");
+        return;
+      }
+      goAfterAuth(result.user);
+    });
+
+    document.getElementById("register-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("register-msg");
+      const result = FolioAuth.register({
+        name: document.getElementById("reg-name").value,
+        email: document.getElementById("reg-email").value,
+        password: document.getElementById("reg-password").value,
+      });
+      if (!result.ok) {
+        msg.textContent = result.error;
+        msg.classList.remove("ok");
+        return;
+      }
+      goAfterAuth(result.user);
+    });
+
+    document.getElementById("instructor-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("instructor-msg");
+      const result = FolioAuth.register({
+        name: document.getElementById("ins-name").value,
+        email: document.getElementById("ins-email").value,
+        password: document.getElementById("ins-password").value,
+        asInstructor: true,
+        instructorPhone: document.getElementById("ins-phone").value,
+        instructorSubjects: document.getElementById("ins-subjects").value,
+        instructorExperience: document.getElementById("ins-experience").value,
+        instructorCredentials: document.getElementById("ins-credentials").value,
+        instructorBio: document.getElementById("ins-bio").value,
+        instructorMotivation: document.getElementById("ins-motivation").value,
+        instructorWebsite: document.getElementById("ins-website").value,
+      });
+      if (!result.ok) {
+        msg.textContent = result.error;
+        msg.classList.remove("ok");
+        return;
+      }
+      msg.textContent = "Tutor application submitted. Waiting for admin approval.";
+      msg.classList.add("ok");
+      setTimeout(() => goAfterAuth(result.user), 900);
+    });
+
+    FolioAuth.mountCurrencySelect(document.getElementById("currency-select"));
+  </script>
+</body>
+</html>

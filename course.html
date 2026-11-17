@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Course — Folio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html" aria-label="Folio home">
+        <img src="assets/logo.png" alt="" width="36" height="36" />
+        <strong>Fol<span>io</span></strong>
+      </a>
+      <div class="topbar-actions">
+        <label class="currency-picker">
+          <span class="visually-hidden">Currency</span>
+          <select id="currency-select" aria-label="Display currency"></select>
+        </label>
+        <a class="btn btn-light" href="course-catalog.html">All courses</a>
+        <a class="btn btn-light" href="account.html">Account</a>
+        <a class="btn btn-dark" href="login.html#instructor">Teach on Folio</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <p class="empty" id="course-missing" hidden>
+      Course not found. <a href="course-catalog.html">Back to browse courses</a>
+    </p>
+
+    <article class="course-detail" id="course-detail" hidden>
+      <a class="course-back" href="course-catalog.html">← All courses</a>
+      <p class="school-kicker">Course details</p>
+      <h1 class="page-title" id="course-title"></h1>
+      <p class="course-detail-lead" id="course-desc"></p>
+
+      <div class="course-facts">
+        <div>
+          <span>Price</span>
+          <strong id="course-price"></strong>
+        </div>
+        <div>
+          <span>Duration</span>
+          <strong id="course-duration"></strong>
+        </div>
+        <div>
+          <span>Instructor</span>
+          <strong class="instructor-with-photo">
+            <span class="profile-avatar profile-avatar-sm" id="course-instructor-avatar" aria-hidden="true"></span>
+            <span id="course-instructor"></span>
+          </strong>
+        </div>
+      </div>
+
+      <p class="hint" id="course-status"></p>
+      <div class="form-msg" id="course-msg"></div>
+      <div class="course-detail-actions" id="course-actions"></div>
+
+      <section class="course-access" id="course-access" hidden>
+        <h2>Your class access</h2>
+        <p class="hint" id="course-access-note" style="margin-top:0"></p>
+        <div class="live-session-card" id="live-session-card" hidden>
+          <h3>Live class</h3>
+          <p id="live-session-when"></p>
+          <p class="hint" id="live-session-note"></p>
+          <div id="live-session-actions"></div>
+        </div>
+        <div id="course-chapters" class="course-chapters"></div>
+        <div class="course-video-wrap" id="course-video-wrap" hidden>
+          <video
+            id="course-lesson-video"
+            class="lesson-video-noforward"
+            controls
+            playsinline
+            preload="metadata"
+            controlslist="nodownload noplaybackrate noremoteplayback"
+            disablepictureinpicture
+          ></video>
+          <p class="hint" id="course-video-caption"></p>
+          <p class="hint lesson-noforward-note">Forward seeking is off — watch the lesson in order.</p>
+        </div>
+        <div class="chapter-test-panel" id="chapter-test-panel" hidden>
+          <h3 id="chapter-test-title">Chapter test</h3>
+          <p class="hint" id="chapter-test-hint"></p>
+          <form id="chapter-test-form">
+            <p class="form-msg" id="chapter-test-msg"></p>
+            <div id="chapter-test-questions"></div>
+            <button class="btn btn-leaf" type="submit">Submit test</button>
+          </form>
+        </div>
+        <div class="course-access-actions" id="course-access-actions"></div>
+      </section>
+    </article>
+  </main>
+
+  <script src="js/auth.js?v=23"></script>
+  <script>
+    function money(n) {
+      return FolioAuth.formatMoney(n);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function showMsg(text, ok) {
+      const msg = document.getElementById("course-msg");
+      msg.textContent = text || "";
+      msg.classList.toggle("ok", !!ok);
+    }
+
+    function courseIdFromUrl() {
+      return new URLSearchParams(window.location.search).get("id") || "";
+    }
+
+    const lessonVideo = document.getElementById("course-lesson-video");
+    let lessonMaxWatched = 0;
+    let lessonSeekGuard = false;
+    let lessonIsSeeking = false;
+
+    function resetLessonWatchProgress() {
+      lessonMaxWatched = 0;
+      lessonSeekGuard = false;
+      lessonIsSeeking = false;
+    }
+
+    function clampLessonSeek() {
+      if (!lessonVideo || lessonSeekGuard) return;
+      const t = Number(lessonVideo.currentTime) || 0;
+      if (t > lessonMaxWatched + 0.25) {
+        lessonSeekGuard = true;
+        try {
+          lessonVideo.currentTime = lessonMaxWatched;
+        } catch (_) {}
+        lessonSeekGuard = false;
+      }
+    }
+
+    if (lessonVideo) {
+      lessonVideo.addEventListener("loadedmetadata", () => {
+        resetLessonWatchProgress();
+      });
+      lessonVideo.addEventListener("timeupdate", () => {
+        if (lessonSeekGuard || lessonIsSeeking || lessonVideo.seeking) return;
+        const t = Number(lessonVideo.currentTime) || 0;
+        // Only advance through natural playback, not scrub jumps.
+        if (t >= lessonMaxWatched && t - lessonMaxWatched <= 1.25) {
+          lessonMaxWatched = t;
+        } else if (t > lessonMaxWatched + 0.25) {
+          clampLessonSeek();
+        }
+      });
+      lessonVideo.addEventListener("seeking", () => {
+        lessonIsSeeking = true;
+        clampLessonSeek();
+      });
+      lessonVideo.addEventListener("seeked", () => {
+        clampLessonSeek();
+        lessonIsSeeking = false;
+      });
+      lessonVideo.addEventListener("ratechange", () => {
+        if (lessonVideo.playbackRate > 1) lessonVideo.playbackRate = 1;
+      });
+      lessonVideo.addEventListener("contextmenu", (e) => e.preventDefault());
+      lessonVideo.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === "Right" || e.key === ".") {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      });
+    }
+
+    function renderCourse() {
+      const id = courseIdFromUrl();
+      const course = FolioAuth.getCourseById(id);
+      const missing = document.getElementById("course-missing");
+      const detail = document.getElementById("course-detail");
+
+      const tutor = FolioAuth.getUsers().find((u) => u.id === (course && course.instructorId));
+      const visitor = FolioAuth.getCurrentUser();
+      const existingEnrollment =
+        course && visitor ? FolioAuth.getEnrollment(course.id, visitor.id) : null;
+      if (
+        !course ||
+        course.status !== "live" ||
+        (FolioAuth.isTutorBanned(tutor) && !existingEnrollment)
+      ) {
+        missing.hidden = false;
+        detail.hidden = true;
+        document.title = "Course not found — Folio";
+        return;
+      }
+
+      missing.hidden = true;
+      detail.hidden = false;
+      document.title = `${course.title} — Folio`;
+
+      document.getElementById("course-title").textContent = course.title;
+      document.getElementById("course-desc").textContent =
+        course.description || "No description yet.";
+      document.getElementById("course-price").textContent = money(course.price);
+      document.getElementById("course-duration").textContent = `${course.durationDays} days`;
+      document.getElementById("course-instructor").textContent = course.instructorName;
+      const instructor = tutor;
+      const instructorAvatar = document.getElementById("course-instructor-avatar");
+      const instructorInitial = (course.instructorName || "T").trim().charAt(0).toUpperCase();
+      if (instructor && instructor.profileImage) {
+        instructorAvatar.style.backgroundImage = `url("${instructor.profileImage}")`;
+        instructorAvatar.textContent = "";
+        instructorAvatar.classList.add("has-photo");
+      } else {
+        instructorAvatar.style.backgroundImage = "";
+        instructorAvatar.textContent = instructorInitial;
+        instructorAvatar.classList.remove("has-photo");
+      }
+
+      const user = FolioAuth.getCurrentUser();
+      const enrollment = user ? FolioAuth.getEnrollment(course.id, user.id) : null;
+      const refreshed = enrollment ? FolioAuth.refreshEnrollmentProgress(enrollment) : null;
+      const actions = document.getElementById("course-actions");
+      const status = document.getElementById("course-status");
+
+      const next = encodeURIComponent(`course.html?id=${course.id}`);
+      let actionHtml = `<button class="btn btn-leaf" type="button" id="enroll-btn">Pay &amp; enroll</button>`;
+      let statusLine = "Review price and duration here. Account needed only when you enroll.";
+
+      if (!user) {
+        actionHtml = `<a class="btn btn-dark" href="login.html?next=${next}#register">Create account to enroll</a>
+          <a class="btn btn-light" href="login.html?next=${next}">Sign in</a>`;
+        statusLine = "You can browse this course freely. Create a learner account when you are ready to join.";
+      } else if (refreshed) {
+        if (refreshed.certStatus === "issued") {
+          actionHtml = `<span class="badge badge-live">Certificate issued</span>`;
+          statusLine = "Learning complete — certificate ready.";
+        } else if (refreshed.certStatus === "requested") {
+          actionHtml = `<span class="badge badge-pending">Certificate pending</span>`;
+          statusLine = "Certificate request under review.";
+        } else if (refreshed.status === "completed") {
+          actionHtml = `<button class="btn btn-leaf" type="button" id="cert-btn">Request certificate</button>`;
+          statusLine = "Learning duration complete — you can request a certificate.";
+        } else {
+          actionHtml = `<span class="badge badge-live">Enrolled</span>`;
+          statusLine = `Paid ${money(refreshed.amount)} · ends ${(refreshed.endAt || "").slice(0, 10)}`;
+        }
+      }
+
+      status.textContent = statusLine;
+      actions.innerHTML = actionHtml;
+
+      const access = document.getElementById("course-access");
+      const accessNote = document.getElementById("course-access-note");
+      const accessActions = document.getElementById("course-access-actions");
+      const chaptersBox = document.getElementById("course-chapters");
+      const liveCard = document.getElementById("live-session-card");
+      const liveWhen = document.getElementById("live-session-when");
+      const liveNote = document.getElementById("live-session-note");
+      const liveActions = document.getElementById("live-session-actions");
+      const videoWrap = document.getElementById("course-video-wrap");
+      const videoEl = document.getElementById("course-lesson-video");
+      const videoCaption = document.getElementById("course-video-caption");
+      const prevSrc = videoEl && videoEl.getAttribute("src");
+      if (prevSrc && prevSrc.startsWith("blob:")) {
+        URL.revokeObjectURL(prevSrc);
+        videoEl.removeAttribute("src");
+        videoEl.load();
+      }
+      videoWrap.hidden = true;
+      liveCard.hidden = true;
+      chaptersBox.innerHTML = "";
+      accessActions.innerHTML = "";
+      const enrolled = !!(refreshed && (refreshed.status === "active" || refreshed.status === "completed" || refreshed.certStatus));
+      if (enrolled) {
+        access.hidden = false;
+        const type = course.deliveryType || "unset";
+        const needsVideo = type === "video" || type === "both";
+        const needsLive = type === "live" || type === "both";
+        let note = "";
+
+        if (needsLive && course.liveAt) {
+          liveCard.hidden = false;
+          liveWhen.textContent = FolioAuth.formatLiveAt(course.liveAt);
+          liveNote.textContent = course.classSchedule || "Your tutor scheduled this live session.";
+          liveActions.innerHTML = course.zoomUrl
+            ? `<a class="btn btn-dark" href="${escapeHtml(course.zoomUrl)}" target="_blank" rel="noopener">Join live class</a>`
+            : "";
+          note = "Live class details are below.";
+        } else if (needsLive) {
+          note = "Your tutor has not scheduled the next live class yet.";
+        }
+
+        const testPanel = document.getElementById("chapter-test-panel");
+        const testForm = document.getElementById("chapter-test-form");
+        testPanel.hidden = true;
+        testForm.onsubmit = null;
+
+        if (needsVideo) {
+          const accessList = FolioAuth.getStudentChapterAccess(course, refreshed);
+          if (accessList.length) {
+            note =
+              note ||
+              "Watch each chapter, then pass its test to unlock the next one.";
+            chaptersBox.innerHTML =
+              `<h3>Chapters</h3>` +
+              accessList
+                .map((ch) => {
+                  let status = "Locked";
+                  let action = "";
+                  if (!ch.unlocked) {
+                    status = "Locked — pass previous test";
+                  } else if (ch.passed) {
+                    status = `Passed${ch.score != null ? ` (${ch.score}%)` : ""}`;
+                    action = `<em>Play</em>`;
+                  } else if (!ch.hasTest) {
+                    status = "Test not ready yet";
+                    action = `<em>Play</em>`;
+                  } else {
+                    status = "Unlocked — take test after watching";
+                    action = `<em>Play</em>`;
+                  }
+                  const disabled = !ch.unlocked ? "disabled" : "";
+                  return `
+                  <div class="chapter-row ${ch.unlocked ? "" : "is-locked"}">
+                    <button class="chapter-play" type="button" ${disabled}
+                      data-play-chapter="${escapeHtml(ch.id)}"
+                      data-video-id="${escapeHtml(ch.videoId || "")}"
+                      data-caption="${escapeHtml(ch.title)}"
+                      data-has-test="${ch.hasTest ? "1" : "0"}"
+                      data-passed="${ch.passed ? "1" : "0"}">
+                      <span>${escapeHtml(ch.title)}<small>${escapeHtml(status)}</small></span>
+                      ${action}
+                    </button>
+                    ${
+                      ch.unlocked && ch.hasTest && !ch.passed
+                        ? `<button class="tiny ok" type="button" data-take-test="${escapeHtml(ch.id)}" data-chapter-title="${escapeHtml(ch.title)}">Take test</button>`
+                        : ""
+                    }
+                  </div>`;
+                })
+                .join("");
+
+            chaptersBox.querySelectorAll("[data-play-chapter]:not([disabled])").forEach((btn) => {
+              btn.addEventListener("click", async () => {
+                const blob = await FolioAuth.getVideoBlob(btn.dataset.videoId);
+                if (!blob) return;
+                const old = videoEl.getAttribute("src");
+                if (old && old.startsWith("blob:")) URL.revokeObjectURL(old);
+                resetLessonWatchProgress();
+                videoWrap.hidden = false;
+                videoCaption.textContent = btn.dataset.caption || "Lesson video";
+                videoEl.src = URL.createObjectURL(blob);
+                videoEl.playbackRate = 1;
+                videoEl.play().catch(() => {});
+              });
+            });
+
+            chaptersBox.querySelectorAll("[data-take-test]").forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const chapterId = btn.dataset.takeTest;
+                const test = FolioAuth.getChapterTest(course, chapterId);
+                if (!test || !test.questions.length) {
+                  showMsg("This chapter test is not ready yet.", false);
+                  return;
+                }
+                testPanel.hidden = false;
+                document.getElementById("chapter-test-title").textContent =
+                  `Test: ${btn.dataset.chapterTitle}`;
+                document.getElementById("chapter-test-hint").textContent =
+                  `Pass score: ${test.passScore}%. Pass to unlock the next chapter.`;
+                document.getElementById("chapter-test-msg").textContent = "";
+                document.getElementById("chapter-test-questions").innerHTML = test.questions
+                  .map(
+                    (q, qi) => `
+                    <fieldset class="test-fieldset">
+                      <legend>Q${qi + 1}. ${escapeHtml(q.prompt)}</legend>
+                      ${q.options
+                        .map(
+                          (opt, oi) => `
+                        <label class="test-option">
+                          <input type="radio" name="q_${escapeHtml(q.id)}" value="${oi}" required />
+                          <span>${escapeHtml(opt)}</span>
+                        </label>`
+                        )
+                        .join("")}
+                    </fieldset>`
+                  )
+                  .join("");
+
+                testForm.onsubmit = (e) => {
+                  e.preventDefault();
+                  const current = FolioAuth.getCurrentUser();
+                  if (!current) return;
+                  const answers = {};
+                  test.questions.forEach((q) => {
+                    const picked = testForm.querySelector(`input[name="q_${q.id}"]:checked`);
+                    answers[q.id] = picked ? Number(picked.value) : -1;
+                  });
+                  const result = FolioAuth.submitChapterTest({
+                    userId: current.id,
+                    courseId: course.id,
+                    chapterId,
+                    answers,
+                  });
+                  const msg = document.getElementById("chapter-test-msg");
+                  if (!result.ok) {
+                    msg.textContent = result.error;
+                    msg.classList.remove("ok");
+                    return;
+                  }
+                  msg.textContent = result.passed
+                    ? `Passed with ${result.score}%. Next chapter unlocked.`
+                    : `Score ${result.score}% — need ${result.passScore}% to pass. Try again.`;
+                  msg.classList.toggle("ok", result.passed);
+                  if (result.passed) renderCourse();
+                };
+                testPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+              });
+            });
+          } else if (FolioAuth.getCourseChapters(course).some((ch) => ch.videoStatus === "pending")) {
+            note = note || "Chapter videos are waiting for admin approval.";
+          } else {
+            note = note || "No approved chapter videos yet.";
+          }
+        }
+
+        if (!needsVideo && !needsLive) {
+          note = "Your tutor has not set up class delivery for this course yet.";
+        }
+
+        accessNote.textContent = note;
+      } else {
+        access.hidden = true;
+      }
+
+      const enrollBtn = document.getElementById("enroll-btn");
+      if (enrollBtn) {
+        enrollBtn.addEventListener("click", () => {
+          const current = FolioAuth.requireAuth(`login.html?next=${next}#register`);
+          if (!current) return;
+          const result = FolioAuth.enrollInCourse({
+            courseId: course.id,
+            userId: current.id,
+            userName: current.name,
+            userEmail: current.email,
+          });
+          if (!result.ok) {
+            showMsg(result.error, false);
+            return;
+          }
+          showMsg("Payment successful. You are enrolled.", true);
+          renderCourse();
+        });
+      }
+
+      const certBtn = document.getElementById("cert-btn");
+      if (certBtn && refreshed) {
+        certBtn.addEventListener("click", () => {
+          const current = FolioAuth.requireAuth("login.html");
+          if (!current) return;
+          const result = FolioAuth.requestCertificate(refreshed.id, current.id);
+          if (!result.ok) {
+            showMsg(result.error, false);
+            return;
+          }
+          showMsg("Certificate requested. An admin will review it.", true);
+          renderCourse();
+        });
+      }
+    }
+
+    FolioAuth.mountCurrencySelect(document.getElementById("currency-select"), renderCourse);
+    window.addEventListener("folio:currency", renderCourse);
+    renderCourse();
+  </script>
+</body>
+</html>

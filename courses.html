@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Courses — Folio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html" aria-label="Folio home">
+        <img src="assets/logo.png" alt="" width="36" height="36" />
+        <strong>Fol<span>io</span></strong>
+      </a>
+      <div class="topbar-actions">
+        <label class="currency-picker">
+          <span class="visually-hidden">Currency</span>
+          <select id="currency-select" aria-label="Display currency"></select>
+        </label>
+        <a class="btn btn-light" href="index.html">Shop</a>
+        <a class="btn btn-light" href="account.html">Account</a>
+        <a class="btn btn-dark" href="login.html#instructor">Teach on Folio</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="school-intro" aria-labelledby="school-title">
+      <p class="school-kicker">Folio Online School</p>
+      <h1 class="page-title" id="school-title">Learn with readers. Grow with guides.</h1>
+      <p class="page-sub school-lead">
+        Folio Courses is our online school for curious minds — live classes from approved instructors,
+        clear learning paths, and certificates you can request when you finish.
+      </p>
+      <div class="school-cta">
+        <a class="btn btn-leaf" href="#benefits-title">See the benefits</a>
+        <a class="btn btn-light" href="login.html#instructor">Teach on Folio</a>
+      </div>
+    </section>
+
+    <section class="school-benefits" aria-labelledby="benefits-title">
+      <h2 id="benefits-title">Why learn here</h2>
+      <ul class="benefit-list">
+        <li>
+          <strong>Guided by real instructors</strong>
+          <span>Every course comes from a Folio-approved tutor who knows the craft and the bookshelf.</span>
+        </li>
+        <li>
+          <strong>Pay once, enroll fully</strong>
+          <span>Unlock the full learning duration after payment — no drip walls or surprise fees.</span>
+        </li>
+        <li>
+          <strong>Finish with a certificate</strong>
+          <span>Complete the course timeline, request your certificate, and keep proof of what you learned.</span>
+        </li>
+        <li>
+          <strong>Built for busy readers</strong>
+          <span>Short, focused programs that fit around your reading life — not the other way around.</span>
+        </li>
+      </ul>
+      <div class="school-benefits-cta">
+        <a class="btn btn-leaf" href="course-catalog.html">View courses</a>
+        <img
+          class="school-benefits-art"
+          src="assets/view-courses-grad.jpg"
+          alt=""
+          width="120"
+          height="120"
+        />
+      </div>
+    </section>
+  </main>
+
+  <script src="js/auth.js?v=7"></script>
+  <script>
+    FolioAuth.mountCurrencySelect(document.getElementById("currency-select"));
+  </script>
+</body>
+</html>

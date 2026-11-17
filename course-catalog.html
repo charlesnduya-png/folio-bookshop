@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browse Courses — Folio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html" aria-label="Folio home">
+        <img src="assets/logo.png" alt="" width="36" height="36" />
+        <strong>Fol<span>io</span></strong>
+      </a>
+      <div class="topbar-actions">
+        <label class="currency-picker">
+          <span class="visually-hidden">Currency</span>
+          <select id="currency-select" aria-label="Display currency"></select>
+        </label>
+        <a class="btn btn-light" href="courses.html">Online school</a>
+        <a class="btn btn-light" href="account.html">Account</a>
+        <a class="btn btn-dark" href="login.html#instructor">Teach on Folio</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <header class="catalog-head">
+      <p class="school-kicker">Folio Online School</p>
+      <h1 class="page-title">Browse courses</h1>
+      <p class="page-sub">
+        Browse freely. Open a class for price and duration — account needed only when you enroll.
+      </p>
+      <label class="catalog-search">
+        <span class="visually-hidden">Search courses</span>
+        <input
+          id="course-search"
+          type="search"
+          placeholder="Search courses, topics, or tutors…"
+          autocomplete="off"
+        />
+      </label>
+    </header>
+
+    <div class="catalog-grid" id="course-grid"></div>
+    <p class="empty" id="course-empty" hidden>No live courses yet. Check back soon.</p>
+  </main>
+
+  <script src="js/auth.js?v=7"></script>
+  <script>
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function renderCourses(query) {
+      const q = String(query || "").trim().toLowerCase();
+      const courses = FolioAuth.getLiveCourses().filter((course) => {
+        if (!q) return true;
+        const haystack = [
+          course.title,
+          course.description,
+          course.instructorName,
+        ]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(q);
+      });
+      const grid = document.getElementById("course-grid");
+      const empty = document.getElementById("course-empty");
+
+      if (!courses.length) {
+        grid.innerHTML = "";
+        empty.hidden = false;
+        empty.textContent = q
+          ? `No courses match “${query.trim()}”. Try another search.`
+          : "No live courses yet. Check back soon.";
+        return;
+      }
+      empty.hidden = true;
+
+      grid.innerHTML = courses
+        .map(
+          (course) => `
+            <a class="catalog-card" href="course.html?id=${encodeURIComponent(course.id)}">
+              <p class="catalog-card-kicker">Taught by ${escapeHtml(course.instructorName)}</p>
+              <h2>${escapeHtml(course.title)}</h2>
+              <p class="catalog-card-desc">${escapeHtml(course.description || "No description yet.")}</p>
+              <span class="catalog-card-cta">Open course</span>
+            </a>`
+        )
+        .join("");
+    }
+
+    const searchInput = document.getElementById("course-search");
+    searchInput.addEventListener("input", () => renderCourses(searchInput.value));
+
+    FolioAuth.mountCurrencySelect(document.getElementById("currency-select"));
+    renderCourses();
+  </script>
+</body>
+</html>
