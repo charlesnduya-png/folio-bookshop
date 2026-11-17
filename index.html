@@ -923,33 +923,118 @@
     @media (max-width: 900px) {
       .hero-inner {
         grid-template-columns: 1fr;
-        gap: 12px;
+        gap: 8px;
         min-height: 0;
-        padding-top: 24px;
-        padding-bottom: 24px;
+        padding: 16px 16px 20px;
       }
 
       .hero-copy {
-        min-height: 280px;
+        min-height: 0;
+        display: block;
       }
 
+      /* Collage overlaps copy on phones — keep the main hero visual only */
       .hero-copy-bg {
-        left: 0;
-        right: 0;
+        display: none;
       }
 
-      .hero-copy-bg img {
-        object-position: center;
+      .hero-copy-content {
+        max-width: none;
+        padding: 8px 2px 4px;
+      }
+
+      .hero-brand {
+        font-size: clamp(2.4rem, 12vw, 3.2rem);
+      }
+
+      .hero-line {
+        font-size: clamp(1.35rem, 6.5vw, 1.75rem);
+        max-width: 18ch;
+      }
+
+      .hero-support {
+        font-size: 0.98rem;
+        max-width: 34ch;
+      }
+
+      .hero-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .hero-actions .btn {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+      }
+
+      body {
+        overflow-x: hidden;
       }
 
       .hero-visual {
-        aspect-ratio: 16 / 12;
+        aspect-ratio: 16 / 11;
         order: -1;
         margin-left: 0;
+        border-radius: 14px;
+        overflow: hidden;
       }
 
       .hero-visual img {
         object-position: center;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .header-inner {
+        padding: 0 12px;
+        gap: 6px;
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+      }
+
+      .brand-name {
+        font-size: 1.2rem;
+      }
+
+      .header-actions {
+        gap: 4px;
+      }
+
+      .currency-btn {
+        padding: 0 6px;
+        height: 30px;
+        font-size: 0.68rem;
+      }
+
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+      }
+
+      .section {
+        padding: 32px 14px;
+      }
+
+      .mobile-panel-inner {
+        padding: 12px 12px 18px;
+      }
+
+      .stack-grid {
+        gap: 16px 10px;
+      }
+
+      .book h3 {
+        font-size: 0.88rem;
+      }
+
+      .book p {
+        font-size: 0.78rem;
       }
     }
 
