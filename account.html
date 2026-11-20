@@ -230,10 +230,60 @@
             <p class="form-msg" id="teach-msg"></p>
 
             <div id="teach-apply" hidden style="margin-top:4px">
-              <p class="hint" style="margin-top:0">
-                Apply first. After admin approval, pay an annual membership to unlock Teach courses.
+              <p class="hint" style="margin-top:0;margin-bottom:14px">
+                Apply from this account. After admin approval, pay an annual membership to unlock Teach courses.
               </p>
-              <a class="btn btn-dark" href="login.html#instructor">Apply as tutor</a>
+              <form id="teach-apply-form" class="tutor-form">
+                <div class="field">
+                  <label for="teach-phone">Phone number</label>
+                  <input id="teach-phone" type="tel" autocomplete="tel" required />
+                </div>
+                <div class="field">
+                  <label for="teach-subjects">Subjects you want to teach</label>
+                  <input
+                    id="teach-subjects"
+                    type="text"
+                    required
+                    placeholder="e.g. Creative writing, poetry, book clubs"
+                  />
+                </div>
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="teach-experience">Years of teaching experience</label>
+                    <input id="teach-experience" type="text" required placeholder="e.g. 5 years" />
+                  </div>
+                  <div class="field">
+                    <label for="teach-credentials">Credentials / education</label>
+                    <input
+                      id="teach-credentials"
+                      type="text"
+                      required
+                      placeholder="e.g. MA Literature, CELTA"
+                    />
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="teach-bio">Teaching bio</label>
+                  <textarea
+                    id="teach-bio"
+                    required
+                    placeholder="Who you teach, your style, and what learners can expect."
+                  ></textarea>
+                </div>
+                <div class="field">
+                  <label for="teach-motivation">Why teach on Folio?</label>
+                  <textarea
+                    id="teach-motivation"
+                    required
+                    placeholder="Tell us why you want to offer courses here."
+                  ></textarea>
+                </div>
+                <div class="field">
+                  <label for="teach-website">Portfolio or website <span class="optional">(optional)</span></label>
+                  <input id="teach-website" type="url" placeholder="https://" />
+                </div>
+                <button class="btn btn-leaf" type="submit">Submit tutor application</button>
+              </form>
             </div>
 
             <div id="teach-membership" class="teach-membership" hidden>
@@ -332,9 +382,11 @@
     </div>
   </main>
 
-  <script src="js/auth.js?v=22"></script>
+  <script src="js/auth.js?v=24"></script>
   <script>
-    const user = FolioAuth.requireAuth("login.html");
+    const user = FolioAuth.requireAuth(
+      "login.html?next=" + encodeURIComponent("account.html" + (location.hash || ""))
+    );
     if (user && user.role === "admin") {
       window.location.href = "admin.html";
     }
@@ -730,8 +782,6 @@
             "Teach access is active. Open your tutor dashboard to manage courses, students, and wallet earnings.";
           workspace.hidden = false;
           membershipNote.textContent = `Membership active until ${(fresh.instructorMembershipExpiresAt || "").slice(0, 10)}.`;
-          window.location.href = "tutor-dashboard.html";
-          return;
         } else if (state === "approved") {
           status.textContent =
             "You are approved as a tutor. Pay the annual membership to unlock the Teach courses section.";
@@ -740,6 +790,13 @@
           status.textContent =
             "Apply to become a tutor. After approval, an annual membership unlocks Teach courses.";
           apply.hidden = false;
+          document.getElementById("teach-phone").value = fresh.instructorPhone || "";
+          document.getElementById("teach-subjects").value = fresh.instructorSubjects || "";
+          document.getElementById("teach-experience").value = fresh.instructorExperience || "";
+          document.getElementById("teach-credentials").value = fresh.instructorCredentials || "";
+          document.getElementById("teach-bio").value = fresh.instructorBio || "";
+          document.getElementById("teach-motivation").value = fresh.instructorMotivation || "";
+          document.getElementById("teach-website").value = fresh.instructorWebsite || "";
         }
       }
 
@@ -805,6 +862,31 @@
           });
         });
       }
+
+      document.getElementById("teach-apply-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const msg = document.getElementById("teach-msg");
+        const fresh = FolioAuth.getCurrentUser() || user;
+        const result = FolioAuth.applyAsTutor({
+          userId: fresh.id,
+          instructorPhone: document.getElementById("teach-phone").value,
+          instructorSubjects: document.getElementById("teach-subjects").value,
+          instructorExperience: document.getElementById("teach-experience").value,
+          instructorCredentials: document.getElementById("teach-credentials").value,
+          instructorBio: document.getElementById("teach-bio").value,
+          instructorMotivation: document.getElementById("teach-motivation").value,
+          instructorWebsite: document.getElementById("teach-website").value,
+        });
+        if (!result.ok) {
+          msg.textContent = result.error;
+          msg.classList.remove("ok");
+          return;
+        }
+        msg.textContent = "Application submitted. Folio admin will review it soon.";
+        msg.classList.add("ok");
+        renderTeach();
+        updateNotifBadge();
+      });
 
       document.getElementById("teach-pay-btn").addEventListener("click", () => {
         const msg = document.getElementById("teach-msg");

@@ -418,6 +418,72 @@
       return this.getUsers().find((u) => u.id === id) || null;
     },
 
+    applyAsTutor({
+      userId,
+      instructorPhone,
+      instructorSubjects,
+      instructorExperience,
+      instructorCredentials,
+      instructorBio,
+      instructorMotivation,
+      instructorWebsite,
+    }) {
+      const user = this.getUsers().find((u) => u.id === userId);
+      if (!user || user.role !== "customer") {
+        return { ok: false, error: "Sign in to a customer account to apply." };
+      }
+      if (this.isTutorBanned(user)) {
+        return { ok: false, error: "Your tutor account is banned. Contact support." };
+      }
+      if (user.instructorStatus === "pending") {
+        return { ok: false, error: "Your tutor application is already pending review." };
+      }
+      if (user.instructorStatus === "approved") {
+        return { ok: false, error: "You are already approved as a tutor." };
+      }
+
+      const phone = String(instructorPhone || "").trim();
+      const subjects = String(instructorSubjects || "").trim();
+      const experience = String(instructorExperience || "").trim();
+      const credentials = String(instructorCredentials || "").trim();
+      const bio = String(instructorBio || "").trim();
+      const motivation = String(instructorMotivation || "").trim();
+      const website = String(instructorWebsite || "").trim();
+      if (!phone || !subjects || !experience || !credentials || !bio || !motivation) {
+        return {
+          ok: false,
+          error: "Add phone, subjects, experience, credentials, bio, and motivation.",
+        };
+      }
+
+      const next = this.updateUser(userId, {
+        instructorStatus: "pending",
+        instructorPhone: phone,
+        instructorSubjects: subjects,
+        instructorExperience: experience,
+        instructorCredentials: credentials,
+        instructorBio: bio,
+        instructorMotivation: motivation,
+        instructorWebsite: website,
+        instructorAppliedAt: new Date().toISOString(),
+      });
+
+      this.addNotification({
+        title: "Tutor application received",
+        body: `${next.name} applied to teach on Folio.`,
+        audience: "admin",
+      });
+      this.addNotification({
+        title: "Tutor application submitted",
+        body: "Thanks — Folio admin will review your teaching profile soon.",
+        userId,
+        audience: "user",
+        fromUserName: "Folio",
+      });
+
+      return { ok: true, user: next };
+    },
+
     getTutorRankOptions() {
       return [
         { value: "none", label: "No medal" },

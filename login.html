@@ -158,7 +158,13 @@
     }
 
     const existing = FolioAuth.getCurrentUser();
-    if (existing) goAfterAuth(existing);
+    if (existing) {
+      if ((location.hash || "").replace("#", "") === "instructor") {
+        window.location.href = "account.html#teach";
+      } else {
+        goAfterAuth(existing);
+      }
+    }
 
     const tabs = document.querySelectorAll("[data-tab]");
     const panels = {
