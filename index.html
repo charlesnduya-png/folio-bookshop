@@ -174,6 +174,45 @@
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
     }
 
+    .nav-social {
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      isolation: isolate;
+      background: #e8f3ec !important;
+      color: #1a3d2b !important;
+      font-weight: 600 !important;
+    }
+
+    .nav-social:hover {
+      background: #d7ebe0 !important;
+      color: #143226 !important;
+    }
+
+    .nav-social-icon {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 2.1em;
+      height: 2.1em;
+      transform: translate(-50%, -50%);
+      color: #2f6b4f;
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .nav-social-icon svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .nav-social-label {
+      position: relative;
+      z-index: 1;
+    }
+
     .nav-courses {
       position: relative;
       display: inline-flex;
@@ -1742,7 +1781,17 @@
             <img src="assets/course-grad.jpg" alt="" width="72" height="72" />
           </a>
         </span>
-        <a class="nav-social" href="social.html">Social</a>
+        <a class="nav-social" href="social.html">
+          <span class="nav-social-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="presentation">
+              <circle cx="12" cy="5" r="2.4" fill="currentColor" />
+              <circle cx="5" cy="18" r="2.2" fill="currentColor" />
+              <circle cx="19" cy="18" r="2.2" fill="currentColor" />
+              <path d="M10.2 6.6L6.4 15.6M13.8 6.6l3.8 9M7.2 18h9.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span class="nav-social-label">Social</span>
+        </a>
       </nav>
 
       <div class="header-actions">
