@@ -106,6 +106,96 @@
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  function normalizeUserRecord(u) {
+    if (!u || typeof u !== "object") return u;
+    const next = {
+      ...u,
+      id: u.id || "u_" + Date.now(),
+      name: String(u.name || "").trim() || "Member",
+      email: String(u.email || "").trim().toLowerCase(),
+      password: String(u.password || ""),
+      role: u.role === "admin" ? "admin" : "customer",
+      accountStatus: u.accountStatus === "suspended" ? "suspended" : "active",
+      profileImage: typeof u.profileImage === "string" ? u.profileImage : "",
+      sellerStatus: u.sellerStatus || "none",
+      instructorStatus: u.instructorStatus || "none",
+    };
+    if (
+      next.email === "tutor@folio.com" &&
+      next.instructorStatus === "approved" &&
+      typeof u.instructorMembershipExpiresAt === "undefined"
+    ) {
+      next.instructorMembershipPaidAt = new Date().toISOString();
+      next.instructorMembershipExpiresAt = new Date(
+        Date.now() + 365 * 24 * 60 * 60 * 1000
+      ).toISOString();
+    }
+    return next;
+  }
+
+  function normalizeSocialPost(p) {
+    if (!p || typeof p !== "object") return null;
+    const comments = Array.isArray(p.comments)
+      ? p.comments
+          .filter((c) => c && c.id && c.authorId && String(c.body || "").trim())
+          .map((c) => ({
+            id: c.id,
+            authorId: c.authorId,
+            authorName: c.authorName || "Member",
+            body: String(c.body || "").trim(),
+            createdAt: c.createdAt || new Date().toISOString(),
+          }))
+      : [];
+    const body = String(p.body || "").trim();
+    const coverImage = String(p.coverImage || "").trim();
+    return {
+      ...p,
+      id: p.id || "blog_" + Date.now(),
+      title: String(p.title || "").trim() || (body ? body.slice(0, 80) : "Photo update"),
+      excerpt: String(p.excerpt || "").trim() || body.slice(0, 160),
+      body,
+      coverImage,
+      authorId: p.authorId || "",
+      authorName: p.authorName || "Folio",
+      authorRole: p.authorRole || "",
+      comments,
+      status: p.status === "published" ? "published" : String(p.status || "published"),
+      createdAt: p.createdAt || new Date().toISOString(),
+      updatedAt: p.updatedAt || p.createdAt || new Date().toISOString(),
+    };
+  }
+
+  function normalizeFollow(f) {
+    if (!f || !f.followerId || !f.followingId || f.followerId === f.followingId) return null;
+    return {
+      id: f.id || "fol_" + Date.now(),
+      followerId: f.followerId,
+      followingId: f.followingId,
+      createdAt: f.createdAt || new Date().toISOString(),
+    };
+  }
+
+  function normalizeSchema() {
+    const users = read(USERS_KEY, []).map(normalizeUserRecord).filter(Boolean);
+    write(USERS_KEY, users);
+    const userIds = new Set(users.map((u) => u.id));
+
+    const posts = read(BLOG_KEY, [])
+      .map(normalizeSocialPost)
+      .filter(Boolean)
+      .map((p) => ({
+        ...p,
+        comments: (p.comments || []).filter((c) => userIds.has(c.authorId) || !c.authorId),
+      }));
+    write(BLOG_KEY, posts);
+
+    const follows = read(FOLLOWS_KEY, [])
+      .map(normalizeFollow)
+      .filter(Boolean)
+      .filter((f) => userIds.has(f.followerId) && userIds.has(f.followingId));
+    write(FOLLOWS_KEY, follows);
+  }
+
   function seed() {
     const users = read(USERS_KEY, null);
     if (!users) {
@@ -116,6 +206,8 @@
           email: "admin@folio.com",
           password: "admin123",
           role: "admin",
+          accountStatus: "active",
+          profileImage: "",
         },
         {
           id: "u_reader",
@@ -123,6 +215,8 @@
           email: "reader@folio.com",
           password: "reader123",
           role: "customer",
+          accountStatus: "active",
+          profileImage: "",
           sellerStatus: "approved",
           instructorStatus: "none",
         },
@@ -132,6 +226,8 @@
           email: "tutor@folio.com",
           password: "tutor123",
           role: "customer",
+          accountStatus: "active",
+          profileImage: "",
           sellerStatus: "none",
           instructorStatus: "approved",
           instructorBio: "Literature and creative writing educator.",
@@ -141,30 +237,6 @@
           ).toISOString(),
         },
       ]);
-    } else {
-      write(
-        USERS_KEY,
-        read(USERS_KEY, []).map((u) => {
-          if (u.role !== "customer") return u;
-          const next = {
-            ...u,
-            sellerStatus: u.sellerStatus || "none",
-            instructorStatus: u.instructorStatus || "none",
-          };
-          // One-time migrate demo tutor if membership fields were never set
-          if (
-            u.email === "tutor@folio.com" &&
-            u.instructorStatus === "approved" &&
-            typeof u.instructorMembershipExpiresAt === "undefined"
-          ) {
-            next.instructorMembershipPaidAt = new Date().toISOString();
-            next.instructorMembershipExpiresAt = new Date(
-              Date.now() + 365 * 24 * 60 * 60 * 1000
-            ).toISOString();
-          }
-          return next;
-        })
-      );
     }
     if (!read(LISTINGS_KEY, null)) write(LISTINGS_KEY, []);
     if (!read(COLLECTION_KEY, null)) write(COLLECTION_KEY, {});
@@ -336,6 +408,7 @@
     if (!read(ENROLLMENTS_KEY, null)) write(ENROLLMENTS_KEY, []);
     if (!read(BLOG_KEY, null)) write(BLOG_KEY, []);
     if (!read(FOLLOWS_KEY, null)) write(FOLLOWS_KEY, []);
+    normalizeSchema();
   }
 
   seed();
@@ -416,11 +489,13 @@
       }
 
       const user = {
-        id: "u_" + Date.now(),
+        id: "u_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
         name: String(name).trim(),
         email: cleanEmail,
         password: String(password),
         role: "customer",
+        accountStatus: "active",
+        profileImage: "",
         sellerStatus: "none",
         instructorStatus: asInstructor ? "pending" : "none",
         instructorBio: asInstructor ? String(instructorBio || "").trim() : "",
@@ -2669,7 +2744,7 @@
         String(title || "").trim() ||
         (cleanBody ? cleanBody.slice(0, 80) : "Photo update");
       const post = {
-        id: "blog_" + Date.now(),
+        id: "blog_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
         title: cleanTitle,
         excerpt: String(excerpt || "").trim() || cleanBody.slice(0, 160),
         body: cleanBody,
@@ -2841,7 +2916,7 @@
       }
       const items = this.getFollows();
       items.push({
-        id: "fol_" + Date.now(),
+        id: "fol_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
         followerId,
         followingId,
         createdAt: new Date().toISOString(),
@@ -2933,17 +3008,78 @@
         USERS_KEY,
         this.getUsers().filter((u) => u.id !== userId)
       );
-      this.saveBlogPosts(this.getBlogPosts().filter((p) => p.authorId !== userId));
+      this.saveBlogPosts(
+        this.getBlogPosts()
+          .filter((p) => p.authorId !== userId)
+          .map((p) => ({
+            ...p,
+            comments: (Array.isArray(p.comments) ? p.comments : []).filter(
+              (c) => c.authorId !== userId
+            ),
+          }))
+      );
       this.saveFollows(
         this.getFollows().filter(
           (f) => f.followerId !== userId && f.followingId !== userId
         )
       );
+      this.saveNotifications(
+        this.getNotifications().filter((n) => n.userId !== userId)
+      );
       const session = this.getSession();
       if (session && session.userId === userId) {
         this.logout();
       }
+      normalizeSchema();
       return { ok: true };
+    },
+
+    auditSocialData() {
+      const users = this.getUsers();
+      const userIds = new Set(users.map((u) => u.id));
+      const posts = this.getBlogPosts();
+      const follows = this.getFollows();
+      const issues = [];
+
+      users.forEach((u) => {
+        if (!u.id || !u.email) issues.push(`User missing id/email: ${u.name || "?"}`);
+        if (!["active", "suspended"].includes(u.accountStatus || "active")) {
+          issues.push(`Bad accountStatus on ${u.email}`);
+        }
+        if (u.role === "customer" && !u.instructorStatus) {
+          issues.push(`Missing instructorStatus on ${u.email}`);
+        }
+      });
+
+      posts.forEach((p) => {
+        if (!Array.isArray(p.comments)) issues.push(`Post ${p.id} missing comments[]`);
+        if (p.authorId && !userIds.has(p.authorId)) {
+          issues.push(`Orphan post author ${p.authorId} on ${p.id}`);
+        }
+        (p.comments || []).forEach((c) => {
+          if (c.authorId && !userIds.has(c.authorId)) {
+            issues.push(`Orphan comment author ${c.authorId} on ${p.id}`);
+          }
+        });
+      });
+
+      follows.forEach((f) => {
+        if (!userIds.has(f.followerId) || !userIds.has(f.followingId)) {
+          issues.push(`Orphan follow ${f.id || f.followerId + "->" + f.followingId}`);
+        }
+      });
+
+      return {
+        ok: issues.length === 0,
+        issues,
+        counts: {
+          users: users.length,
+          posts: posts.length,
+          follows: follows.length,
+          comments: posts.reduce((n, p) => n + (p.comments || []).length, 0),
+          suspended: users.filter((u) => u.accountStatus === "suspended").length,
+        },
+      };
     },
 
     isInstructorApproved(user) {
