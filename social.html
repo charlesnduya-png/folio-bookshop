@@ -7,9 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=28" />
+  <link rel="stylesheet" href="css/app.css?v=29" />
 </head>
-<body>
+<body class="social-body">
   <header class="topbar">
     <div class="topbar-inner">
       <a class="brand" href="index.html" aria-label="Folio home">
@@ -28,67 +28,54 @@
     </div>
   </header>
 
-  <main class="shell social-page">
-    <header class="social-hero">
-      <div class="social-hero-icon" aria-hidden="true">
-        <svg viewBox="0 0 120 120" role="presentation">
-          <circle cx="60" cy="28" r="14" fill="currentColor" />
-          <circle cx="28" cy="78" r="12" fill="currentColor" />
-          <circle cx="92" cy="78" r="12" fill="currentColor" />
-          <path
-            d="M48 38 L34 68 M72 38 L86 68 M40 78 H80"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="6"
-            stroke-linecap="round"
-          />
-        </svg>
-      </div>
-      <div class="social-hero-copy">
-        <p class="school-kicker">Community</p>
-        <h1 class="page-title">Social</h1>
-        <p class="page-sub">Students and tutors share updates, follow each other, and stay in the Folio loop.</p>
-      </div>
-    </header>
+  <main class="shell social-feed-shell">
+    <aside class="social-side-card" id="social-profile-card">
+      <div class="social-side-banner" aria-hidden="true"></div>
+      <div class="social-side-avatar" id="side-avatar"></div>
+      <h2 id="side-name">Folio Social</h2>
+      <p class="hint" id="side-role">Students and tutors share updates</p>
+      <p class="social-side-stats" id="side-stats" hidden></p>
+    </aside>
 
-    <section class="social-composer" id="social-composer" hidden>
-      <h2>Share with Folio</h2>
-      <p class="hint" id="composer-hint">Post as a student or tutor.</p>
-      <form id="social-post-form">
+    <div class="social-feed-main">
+      <div class="social-feed-toolbar">
+        <div class="social-feed-tabs" role="tablist" aria-label="Feed filter">
+          <button type="button" class="is-active" data-feed="all">Everyone</button>
+          <button type="button" data-feed="following">Following</button>
+        </div>
+      </div>
+
+      <section class="li-composer" id="social-composer" hidden>
+        <div class="li-composer-top">
+          <div class="li-avatar" id="composer-avatar" aria-hidden="true"></div>
+          <label class="visually-hidden" for="social-body">Start a post</label>
+          <textarea id="social-body" placeholder="Start a post…" rows="2"></textarea>
+        </div>
+        <div class="li-composer-preview" id="image-preview" hidden>
+          <img id="image-preview-img" alt="Selected photo" />
+          <button type="button" class="li-remove-image" id="clear-image" aria-label="Remove photo">×</button>
+        </div>
         <p class="form-msg" id="social-post-msg"></p>
-        <div class="field">
-          <label for="social-title">Title</label>
-          <input id="social-title" type="text" required maxlength="120" placeholder="What’s happening?" />
+        <div class="li-composer-actions">
+          <label class="li-photo-btn">
+            <input id="social-image" type="file" accept="image/*" hidden />
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="m21 16-5.2-5.2a1.5 1.5 0 0 0-2.1 0L7 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Photo
+          </label>
+          <button class="btn btn-leaf" type="button" id="publish-post">Post</button>
         </div>
-        <div class="field">
-          <label for="social-body">Post</label>
-          <textarea id="social-body" required maxlength="4000" placeholder="Write a note for the community…"></textarea>
-        </div>
-        <div class="field">
-          <label for="social-cover">Image URL <span class="optional">(optional)</span></label>
-          <input id="social-cover" type="url" placeholder="https://…" />
-        </div>
-        <button class="btn btn-leaf" type="submit">Publish</button>
-      </form>
-    </section>
+      </section>
 
-    <p class="social-signin-prompt" id="social-signin" hidden>
-      <a href="login.html">Sign in</a> as a student or tutor to post and follow people.
-    </p>
+      <p class="social-signin-prompt" id="social-signin" hidden>
+        <a href="login.html">Sign in</a> as a student or tutor to post, follow, and comment.
+      </p>
 
-    <div class="social-feed-toolbar">
-      <div class="social-feed-tabs" role="tablist" aria-label="Feed filter">
-        <button type="button" class="is-active" data-feed="all">Everyone</button>
-        <button type="button" data-feed="following">Following</button>
-      </div>
-      <p class="hint" id="my-follow-counts" hidden></p>
+      <div id="social-list" class="li-feed"></div>
+      <p class="empty" id="social-empty" hidden>No posts yet. Share the first update.</p>
     </div>
-
-    <div id="social-list" class="blog-list social-list"></div>
-    <p class="empty" id="social-empty" hidden>No social posts yet.</p>
   </main>
 
-  <script src="js/auth.js?v=28"></script>
+  <script src="js/auth.js?v=29"></script>
   <script>
     function escapeHtml(value) {
       return String(value)
@@ -98,32 +85,116 @@
         .replaceAll('"', "&quot;");
     }
 
+    function initials(name) {
+      return String(name || "F")
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0].toUpperCase())
+        .join("") || "F";
+    }
+
+    function avatarHtml(image, name, extraClass = "") {
+      if (image) {
+        return `<div class="li-avatar ${extraClass}" style="background-image:url('${escapeHtml(image)}')" aria-hidden="true"></div>`;
+      }
+      return `<div class="li-avatar li-avatar-fallback ${extraClass}" aria-hidden="true">${escapeHtml(initials(name))}</div>`;
+    }
+
+    function timeLabel(iso) {
+      if (!iso) return "";
+      const then = new Date(iso).getTime();
+      if (!Number.isFinite(then)) return String(iso).slice(0, 10);
+      const mins = Math.max(0, Math.round((Date.now() - then) / 60000));
+      if (mins < 1) return "now";
+      if (mins < 60) return mins + "m";
+      const hrs = Math.round(mins / 60);
+      if (hrs < 24) return hrs + "h";
+      const days = Math.round(hrs / 24);
+      if (days < 7) return days + "d";
+      return String(iso).slice(0, 10);
+    }
+
     let feedMode = "all";
+    let selectedFile = null;
     const me = FolioAuth.getCurrentUser();
+
+    function setAvatarEl(el, image, name) {
+      if (!el) return;
+      if (image) {
+        el.style.backgroundImage = `url("${image}")`;
+        el.textContent = "";
+        el.classList.remove("li-avatar-fallback");
+      } else {
+        el.style.backgroundImage = "";
+        el.textContent = initials(name);
+        el.classList.add("li-avatar-fallback");
+      }
+    }
+
+    function renderSide() {
+      const nameEl = document.getElementById("side-name");
+      const roleEl = document.getElementById("side-role");
+      const stats = document.getElementById("side-stats");
+      const avatar = document.getElementById("side-avatar");
+      if (me) {
+        nameEl.textContent = me.name;
+        roleEl.textContent = FolioAuth.socialRoleLabel(me);
+        setAvatarEl(avatar, me.profileImage, me.name);
+        const c = FolioAuth.getFollowCounts(me.id);
+        stats.hidden = false;
+        stats.innerHTML = `<strong>${c.followers}</strong> followers · <strong>${c.following}</strong> following`;
+      } else {
+        nameEl.textContent = "Folio Social";
+        roleEl.textContent = "Students and tutors share updates";
+        setAvatarEl(avatar, "", "Folio");
+        stats.hidden = true;
+      }
+    }
 
     function renderComposer() {
       const composer = document.getElementById("social-composer");
       const signin = document.getElementById("social-signin");
-      const counts = document.getElementById("my-follow-counts");
       if (me && FolioAuth.canPostToSocial(me)) {
         composer.hidden = false;
         signin.hidden = true;
-        document.getElementById("composer-hint").textContent =
-          `Posting as ${me.name} · ${FolioAuth.socialRoleLabel(me)}`;
-        const c = FolioAuth.getFollowCounts(me.id);
-        counts.hidden = false;
-        counts.textContent = `${c.followers} followers · ${c.following} following`;
+        setAvatarEl(document.getElementById("composer-avatar"), me.profileImage, me.name);
       } else {
         composer.hidden = true;
         signin.hidden = false;
-        counts.hidden = true;
       }
     }
 
-    function followButton(authorId) {
-      if (!me || me.id === authorId || me.role === "admin") return "";
-      const on = FolioAuth.isFollowing(me.id, authorId);
-      return `<button class="btn ${on ? "btn-light" : "btn-leaf"} social-follow-btn" type="button" data-follow="${escapeHtml(authorId)}">${on ? "Following" : "Follow"}</button>`;
+    function commentsHtml(post) {
+      const comments = post.comments || [];
+      const list = comments
+        .map((c) => {
+          const canDelete =
+            me && (me.role === "admin" || me.id === c.authorId || me.id === post.authorId);
+          return `
+          <div class="li-comment">
+            ${avatarHtml(c.authorImage, c.authorName, "li-avatar-sm")}
+            <div class="li-comment-bubble">
+              <div class="li-comment-head">
+                <strong>${escapeHtml(c.authorName)}</strong>
+                <span>${escapeHtml(c.authorRole || "")} · ${escapeHtml(timeLabel(c.createdAt))}</span>
+                ${canDelete ? `<button type="button" class="li-comment-del" data-del-comment="${escapeHtml(c.id)}" data-post="${escapeHtml(post.id)}" aria-label="Delete comment">Delete</button>` : ""}
+              </div>
+              <p>${escapeHtml(c.body)}</p>
+            </div>
+          </div>`;
+        })
+        .join("");
+
+      const box = me
+        ? `<form class="li-comment-form" data-comment-form="${escapeHtml(post.id)}">
+            ${avatarHtml(me.profileImage, me.name, "li-avatar-sm")}
+            <input type="text" maxlength="1000" placeholder="Add a comment…" required />
+            <button class="btn btn-leaf" type="submit">Comment</button>
+          </form>`
+        : `<p class="hint li-comment-login"><a href="login.html">Sign in</a> to comment</p>`;
+
+      return `<div class="li-comments" data-comments="${escapeHtml(post.id)}">${list}${box}</div>`;
     }
 
     function renderSocialList() {
@@ -139,47 +210,60 @@
         empty.textContent =
           feedMode === "following"
             ? "No posts from people you follow yet."
-            : "No social posts yet. Be the first to share.";
+            : "No posts yet. Share the first update.";
         return;
       }
       empty.hidden = true;
       list.innerHTML = posts
         .map((p) => {
           const canDelete = me && (me.role === "admin" || me.id === p.authorId);
+          const following =
+            me && me.id !== p.authorId && p.authorId
+              ? FolioAuth.isFollowing(me.id, p.authorId)
+              : false;
+          const followBtn =
+            me && me.id !== p.authorId && me.role !== "admin"
+              ? `<button class="li-follow ${following ? "is-on" : ""}" type="button" data-follow="${escapeHtml(p.authorId)}">${following ? "Following" : "+ Follow"}</button>`
+              : "";
           return `
-        <article class="blog-card social-card">
-          ${
-            p.coverImage
-              ? `<a class="blog-card-cover" href="social-post.html?id=${encodeURIComponent(p.id)}" style="background-image:url('${escapeHtml(p.coverImage)}')" aria-hidden="true"></a>`
-              : `<div class="blog-card-cover social-card-fallback" aria-hidden="true"></div>`
-          }
-          <div class="blog-card-body">
-            <div class="social-card-meta">
-              <div>
-                <p class="social-author">${escapeHtml(p.authorName || "Folio")} <span>${escapeHtml(p.authorRole || "")}</span></p>
-                <p class="hint" style="margin:0">${escapeHtml((p.createdAt || "").slice(0, 10))}</p>
-              </div>
-              ${followButton(p.authorId)}
+        <article class="li-card" data-post-id="${escapeHtml(p.id)}">
+          <header class="li-card-head">
+            ${avatarHtml(p.authorImage, p.authorName)}
+            <div class="li-card-identity">
+              <p class="li-card-name">${escapeHtml(p.authorName || "Folio")}</p>
+              <p class="li-card-sub">${escapeHtml(p.authorRole || "Member")} · ${escapeHtml(timeLabel(p.createdAt))}</p>
             </div>
-            <h2><a href="social-post.html?id=${encodeURIComponent(p.id)}">${escapeHtml(p.title)}</a></h2>
-            <p>${escapeHtml(p.excerpt || "")}</p>
-            <div class="social-card-actions">
-              <a class="btn btn-leaf" href="social-post.html?id=${encodeURIComponent(p.id)}">View post</a>
-              ${canDelete ? `<button class="btn btn-light" type="button" data-del-post="${escapeHtml(p.id)}">Delete</button>` : ""}
-            </div>
+            ${followBtn}
+            ${canDelete ? `<button class="li-more" type="button" data-del-post="${escapeHtml(p.id)}" aria-label="Delete post">Delete</button>` : ""}
+          </header>
+          <div class="li-card-body">
+            <p>${escapeHtml(p.body || p.excerpt || p.title || "").replaceAll("\n", "<br />")}</p>
           </div>
+          ${p.coverImage ? `<div class="li-card-media"><img src="${escapeHtml(p.coverImage)}" alt="" /></div>` : ""}
+          <div class="li-card-stats">
+            <span>${Number(p.commentCount || 0)} comment${Number(p.commentCount || 0) === 1 ? "" : "s"}</span>
+          </div>
+          <div class="li-card-toolbar">
+            <button type="button" class="li-tool" data-toggle-comments="${escapeHtml(p.id)}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6A2.5 2.5 0 0 1 16.5 15H10l-4 3.2V15H7.5A2.5 2.5 0 0 1 5 12.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+              Comment
+            </button>
+            <a class="li-tool" href="social-post.html?id=${encodeURIComponent(p.id)}">Open</a>
+          </div>
+          ${commentsHtml(p)}
         </article>`;
         })
         .join("");
 
+      bindFeedEvents(list);
+    }
+
+    function bindFeedEvents(list) {
       list.querySelectorAll("[data-follow]").forEach((btn) => {
         btn.addEventListener("click", () => {
-          if (!me) {
-            window.location.href = "login.html";
-            return;
-          }
+          if (!me) return (window.location.href = "login.html");
           FolioAuth.toggleFollow({ followerId: me.id, followingId: btn.dataset.follow });
-          renderComposer();
+          renderSide();
           renderSocialList();
         });
       });
@@ -189,6 +273,52 @@
           if (!window.confirm("Delete this post?")) return;
           FolioAuth.deleteSocialPost(btn.dataset.delPost, me.id);
           renderSocialList();
+        });
+      });
+
+      list.querySelectorAll("[data-toggle-comments]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest(".li-card");
+          const panel = card && card.querySelector(".li-comments");
+          if (!panel) return;
+          panel.classList.toggle("is-open");
+          const input = panel.querySelector("input");
+          if (panel.classList.contains("is-open") && input) input.focus();
+        });
+      });
+
+      list.querySelectorAll("[data-comment-form]").forEach((form) => {
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+          if (!me) return (window.location.href = "login.html");
+          const input = form.querySelector("input");
+          const result = FolioAuth.addSocialComment({
+            postId: form.dataset.commentForm,
+            authorId: me.id,
+            body: input.value,
+          });
+          if (!result.ok) {
+            window.alert(result.error);
+            return;
+          }
+          renderSocialList();
+          const card = document.querySelector(`[data-post-id="${form.dataset.commentForm}"]`);
+          const panel = card && card.querySelector(".li-comments");
+          if (panel) panel.classList.add("is-open");
+        });
+      });
+
+      list.querySelectorAll("[data-del-comment]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          FolioAuth.deleteSocialComment({
+            postId: btn.dataset.post,
+            commentId: btn.dataset.delComment,
+            actorId: me.id,
+          });
+          renderSocialList();
+          const card = document.querySelector(`[data-post-id="${btn.dataset.post}"]`);
+          const panel = card && card.querySelector(".li-comments");
+          if (panel) panel.classList.add("is-open");
         });
       });
     }
@@ -207,28 +337,50 @@
       });
     });
 
-    document.getElementById("social-post-form").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const msg = document.getElementById("social-post-msg");
-      if (!me) {
-        window.location.href = "login.html";
+    document.getElementById("social-image").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      selectedFile = file || null;
+      const preview = document.getElementById("image-preview");
+      const img = document.getElementById("image-preview-img");
+      if (!file) {
+        preview.hidden = true;
+        img.removeAttribute("src");
         return;
       }
-      const result = FolioAuth.createSocialPost({
+      const url = URL.createObjectURL(file);
+      img.src = url;
+      preview.hidden = false;
+    });
+
+    document.getElementById("clear-image").addEventListener("click", () => {
+      selectedFile = null;
+      document.getElementById("social-image").value = "";
+      document.getElementById("image-preview").hidden = true;
+      document.getElementById("image-preview-img").removeAttribute("src");
+    });
+
+    document.getElementById("publish-post").addEventListener("click", async () => {
+      const msg = document.getElementById("social-post-msg");
+      if (!me) return (window.location.href = "login.html");
+      msg.textContent = "Publishing…";
+      msg.classList.remove("ok");
+      const result = await FolioAuth.createSocialPostWithImage({
         authorId: me.id,
         authorName: me.name,
-        title: document.getElementById("social-title").value,
         body: document.getElementById("social-body").value,
-        coverImage: document.getElementById("social-cover").value,
+        file: selectedFile,
       });
       if (!result.ok) {
         msg.textContent = result.error;
-        msg.classList.remove("ok");
         return;
       }
-      msg.textContent = "Post published.";
+      msg.textContent = "Posted.";
       msg.classList.add("ok");
-      e.target.reset();
+      document.getElementById("social-body").value = "";
+      selectedFile = null;
+      document.getElementById("social-image").value = "";
+      document.getElementById("image-preview").hidden = true;
+      document.getElementById("image-preview-img").removeAttribute("src");
       feedMode = "all";
       document.querySelectorAll("[data-feed]").forEach((b) => {
         b.classList.toggle("is-active", b.dataset.feed === "all");
@@ -237,6 +389,7 @@
     });
 
     FolioAuth.mountCurrencySelect(document.getElementById("currency-select"));
+    renderSide();
     renderComposer();
     renderSocialList();
   </script>

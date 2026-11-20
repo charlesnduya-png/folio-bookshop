@@ -516,24 +516,16 @@
         <section class="admin-panel" id="panel-blog" hidden>
           <div class="admin-card">
             <h2>Share a social post</h2>
-            <p class="hint">Admins, students, and tutors can post. Moderate community posts below.</p>
+            <p class="hint">Post like the community feed — message and optional image URL. Students and tutors can also post from Social.</p>
             <form id="blog-form">
               <p class="form-msg" id="blog-form-msg"></p>
               <div class="field">
-                <label for="blog-title">Title</label>
-                <input id="blog-title" type="text" required placeholder="Post title" />
-              </div>
-              <div class="field">
-                <label for="blog-excerpt">Short excerpt <span class="optional">(optional)</span></label>
-                <input id="blog-excerpt" type="text" placeholder="One-line summary for the Social feed" />
-              </div>
-              <div class="field">
-                <label for="blog-cover">Cover image URL <span class="optional">(optional)</span></label>
-                <input id="blog-cover" type="url" placeholder="https://…" />
-              </div>
-              <div class="field">
                 <label for="blog-body">Post</label>
-                <textarea id="blog-body" required placeholder="Write the social update…" style="min-height:180px"></textarea>
+                <textarea id="blog-body" required placeholder="Share an update…" style="min-height:140px"></textarea>
+              </div>
+              <div class="field">
+                <label for="blog-cover">Image URL <span class="optional">(optional)</span></label>
+                <input id="blog-cover" type="url" placeholder="https://…" />
               </div>
               <button class="btn btn-leaf" type="submit">Publish post</button>
               <a class="btn btn-light" href="social.html" target="_blank" rel="noopener">View Social</a>
@@ -1880,8 +1872,6 @@
         const result = FolioAuth.createBlogPost({
           authorId: user.id,
           authorName: user.name,
-          title: document.getElementById("blog-title").value,
-          excerpt: document.getElementById("blog-excerpt").value,
           coverImage: document.getElementById("blog-cover").value,
           body: document.getElementById("blog-body").value,
         });

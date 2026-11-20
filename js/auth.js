@@ -2589,13 +2589,65 @@
       }
       return posts.map((p) => {
         const author = usersById.get(p.authorId);
+        const comments = (Array.isArray(p.comments) ? p.comments : [])
+          .map((c) => {
+            const cAuthor = usersById.get(c.authorId);
+            if (cAuthor && this.isAccountSuspended(cAuthor)) return null;
+            return {
+              ...c,
+              authorName: (cAuthor && cAuthor.name) || c.authorName || "Member",
+              authorRole: this.socialRoleLabel(cAuthor),
+              authorImage: (cAuthor && cAuthor.profileImage) || "",
+            };
+          })
+          .filter(Boolean)
+          .sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
         return {
           ...p,
           authorName: (author && author.name) || p.authorName || "Folio",
           authorRole: this.socialRoleLabel(author),
           authorImage: (author && author.profileImage) || "",
+          comments,
+          commentCount: comments.length,
         };
       });
+    },
+
+    async prepareSocialImage(file) {
+      if (!file) return { ok: false, error: "Choose an image." };
+      if (!String(file.type || "").startsWith("image/")) {
+        return { ok: false, error: "Upload an image file (JPG, PNG, or WebP)." };
+      }
+      if (file.size > 8 * 1024 * 1024) {
+        return { ok: false, error: "Image must be 8MB or smaller." };
+      }
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const max = 1200;
+            const scale = Math.min(1, max / Math.max(img.width, img.height));
+            const w = Math.max(1, Math.round(img.width * scale));
+            const h = Math.max(1, Math.round(img.height * scale));
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL("image/jpeg", 0.82));
+          };
+          img.onerror = () => reject(new Error("Could not read that image."));
+          img.src = String(reader.result || "");
+        };
+        reader.onerror = () => reject(new Error("Could not read that image."));
+        reader.readAsDataURL(file);
+      }).catch((err) => ({ __error: err.message || "Could not process image." }));
+
+      if (dataUrl && dataUrl.__error) {
+        return { ok: false, error: dataUrl.__error };
+      }
+      return { ok: true, dataUrl };
     },
 
     createBlogPost({ authorId, authorName, title, excerpt, body, coverImage }) {
@@ -2608,20 +2660,24 @@
             : "Sign in as a student or tutor to post.",
         };
       }
-      const cleanTitle = String(title || "").trim();
       const cleanBody = String(body || "").trim();
-      if (!cleanTitle || !cleanBody) {
-        return { ok: false, error: "Add a title and post body." };
+      const image = String(coverImage || "").trim();
+      if (!cleanBody && !image) {
+        return { ok: false, error: "Add a message or photo to post." };
       }
+      const cleanTitle =
+        String(title || "").trim() ||
+        (cleanBody ? cleanBody.slice(0, 80) : "Photo update");
       const post = {
         id: "blog_" + Date.now(),
         title: cleanTitle,
         excerpt: String(excerpt || "").trim() || cleanBody.slice(0, 160),
         body: cleanBody,
-        coverImage: String(coverImage || "").trim(),
+        coverImage: image,
         authorId,
         authorName: authorName || author.name || "Folio",
         authorRole: this.socialRoleLabel(author),
+        comments: [],
         status: "published",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -2634,6 +2690,82 @@
 
     createSocialPost(payload) {
       return this.createBlogPost(payload);
+    },
+
+    async createSocialPostWithImage({ authorId, authorName, body, file }) {
+      let coverImage = "";
+      if (file) {
+        const prepared = await this.prepareSocialImage(file);
+        if (!prepared.ok) return prepared;
+        coverImage = prepared.dataUrl;
+      }
+      return this.createBlogPost({
+        authorId,
+        authorName,
+        body,
+        coverImage,
+      });
+    },
+
+    addSocialComment({ postId, authorId, body }) {
+      const author = this.getUsers().find((u) => u.id === authorId);
+      if (!this.canPostToSocial(author)) {
+        return {
+          ok: false,
+          error: author && this.isAccountSuspended(author)
+            ? "Your account is suspended."
+            : "Sign in to comment.",
+        };
+      }
+      const cleanBody = String(body || "").trim();
+      if (!cleanBody) return { ok: false, error: "Write a comment first." };
+      if (cleanBody.length > 1000) {
+        return { ok: false, error: "Comments can be up to 1000 characters." };
+      }
+      const items = this.getBlogPosts();
+      const idx = items.findIndex((p) => p.id === postId);
+      if (idx < 0) return { ok: false, error: "Post not found." };
+      const comment = {
+        id: "cmt_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+        authorId,
+        authorName: author.name || "Member",
+        body: cleanBody,
+        createdAt: new Date().toISOString(),
+      };
+      const comments = Array.isArray(items[idx].comments) ? items[idx].comments.slice() : [];
+      comments.push(comment);
+      items[idx] = {
+        ...items[idx],
+        comments,
+        updatedAt: new Date().toISOString(),
+      };
+      this.saveBlogPosts(items);
+      return { ok: true, comment, post: items[idx] };
+    },
+
+    deleteSocialComment({ postId, commentId, actorId }) {
+      const actor = this.getUsers().find((u) => u.id === actorId);
+      if (!actor) return { ok: false, error: "Sign in to delete a comment." };
+      const items = this.getBlogPosts();
+      const idx = items.findIndex((p) => p.id === postId);
+      if (idx < 0) return { ok: false, error: "Post not found." };
+      const comments = Array.isArray(items[idx].comments) ? items[idx].comments.slice() : [];
+      const comment = comments.find((c) => c.id === commentId);
+      if (!comment) return { ok: false, error: "Comment not found." };
+      const allowed =
+        actor.role === "admin" ||
+        comment.authorId === actorId ||
+        items[idx].authorId === actorId;
+      if (!allowed) {
+        return { ok: false, error: "You cannot delete this comment." };
+      }
+      items[idx] = {
+        ...items[idx],
+        comments: comments.filter((c) => c.id !== commentId),
+        updatedAt: new Date().toISOString(),
+      };
+      this.saveBlogPosts(items);
+      return { ok: true, post: items[idx] };
     },
 
     deleteBlogPost(postId, actorId) {
