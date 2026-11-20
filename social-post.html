@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=27" />
+  <link rel="stylesheet" href="css/app.css?v=28" />
 </head>
 <body>
   <header class="topbar">
@@ -33,14 +33,19 @@
     </p>
     <article class="blog-article" id="post-article" hidden>
       <a class="course-back" href="social.html">← Social</a>
-      <p class="school-kicker" id="post-meta"></p>
-      <h1 class="page-title" id="post-title"></h1>
+      <div class="social-post-header">
+        <div>
+          <p class="school-kicker" id="post-meta"></p>
+          <h1 class="page-title" id="post-title"></h1>
+        </div>
+        <div class="social-post-actions" id="post-actions"></div>
+      </div>
       <div class="blog-article-cover" id="post-cover" hidden></div>
       <div class="blog-article-body" id="post-body"></div>
     </article>
   </main>
 
-  <script src="js/auth.js?v=25"></script>
+  <script src="js/auth.js?v=28"></script>
   <script>
     function escapeHtml(value) {
       return String(value)
@@ -57,13 +62,16 @@
         .join("");
     }
 
+    const me = FolioAuth.getCurrentUser();
     const id = new URLSearchParams(window.location.search).get("id") || "";
     const getPost = FolioAuth.getSocialPostById || FolioAuth.getBlogPostById;
     const post = getPost.call(FolioAuth, id);
+    const author = post ? FolioAuth.getUsers().find((u) => u.id === post.authorId) : null;
     const missing = document.getElementById("post-missing");
     const article = document.getElementById("post-article");
+    const hiddenBySuspend = author && FolioAuth.isAccountSuspended(author);
 
-    if (!post || post.status !== "published") {
+    if (!post || post.status !== "published" || hiddenBySuspend) {
       missing.hidden = false;
       article.hidden = true;
       document.title = "Post not found — Folio";
@@ -71,14 +79,43 @@
       missing.hidden = true;
       article.hidden = false;
       document.title = `${post.title} — Folio Social`;
+      const role = FolioAuth.socialRoleLabel(author);
+      const counts = author ? FolioAuth.getFollowCounts(author.id) : { followers: 0, following: 0 };
       document.getElementById("post-meta").textContent =
-        `${(post.createdAt || "").slice(0, 10)} · ${post.authorName || "Folio"}`;
+        `${(post.createdAt || "").slice(0, 10)} · ${post.authorName || "Folio"} · ${role} · ${counts.followers} followers`;
       document.getElementById("post-title").textContent = post.title;
       document.getElementById("post-body").innerHTML = formatBody(post.body || "");
       const cover = document.getElementById("post-cover");
       if (post.coverImage) {
         cover.hidden = false;
         cover.style.backgroundImage = `url("${post.coverImage}")`;
+      }
+
+      const actions = document.getElementById("post-actions");
+      let html = "";
+      if (me && author && me.id !== author.id && author.role !== "admin") {
+        const on = FolioAuth.isFollowing(me.id, author.id);
+        html += `<button class="btn ${on ? "btn-light" : "btn-leaf"}" type="button" id="follow-author">${on ? "Following" : "Follow"}</button>`;
+      }
+      if (me && (me.role === "admin" || me.id === post.authorId)) {
+        html += `<button class="btn btn-light" type="button" id="delete-post">Delete</button>`;
+      }
+      actions.innerHTML = html;
+
+      const followBtn = document.getElementById("follow-author");
+      if (followBtn) {
+        followBtn.addEventListener("click", () => {
+          FolioAuth.toggleFollow({ followerId: me.id, followingId: author.id });
+          window.location.reload();
+        });
+      }
+      const delBtn = document.getElementById("delete-post");
+      if (delBtn) {
+        delBtn.addEventListener("click", () => {
+          if (!window.confirm("Delete this post?")) return;
+          FolioAuth.deleteSocialPost(post.id, me.id);
+          window.location.href = "social.html";
+        });
       }
     }
 

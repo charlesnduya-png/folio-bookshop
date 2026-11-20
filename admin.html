@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=27" />
+  <link rel="stylesheet" href="css/app.css?v=28" />
 </head>
 <body class="admin-body">
   <div class="admin-frame">
@@ -28,6 +28,7 @@
         <button type="button" data-panel="tutors">Tutors</button>
         <button type="button" data-panel="courses">Courses</button>
         <button type="button" data-panel="blog">Social</button>
+        <button type="button" data-panel="accounts">Accounts</button>
         <button type="button" data-panel="settings">Settings</button>
       </nav>
 
@@ -515,7 +516,7 @@
         <section class="admin-panel" id="panel-blog" hidden>
           <div class="admin-card">
             <h2>Share a social post</h2>
-            <p class="hint">Only admins can publish posts. They appear on the public Social page.</p>
+            <p class="hint">Admins, students, and tutors can post. Moderate community posts below.</p>
             <form id="blog-form">
               <p class="form-msg" id="blog-form-msg"></p>
               <div class="field">
@@ -557,11 +558,38 @@
             <p class="empty" id="blog-posts-empty" hidden>No social posts yet.</p>
           </div>
         </section>
+
+        <!-- Accounts -->
+        <section class="admin-panel" id="panel-accounts" hidden>
+          <div class="admin-card">
+            <h2>Member accounts</h2>
+            <p class="hint">Suspend or permanently delete student and tutor accounts. Suspended users cannot sign in, post, or appear in Social.</p>
+            <div class="field">
+              <label for="accounts-search">Search accounts</label>
+              <input id="accounts-search" type="search" placeholder="Search by name or email…" />
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Followers</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="accounts-body"></tbody>
+              </table>
+            </div>
+            <p class="empty" id="accounts-empty" hidden>No member accounts found.</p>
+          </div>
+        </section>
       </div>
     </main>
   </div>
 
-  <script src="js/auth.js?v=22"></script>
+  <script src="js/auth.js?v=28"></script>
   <script>
     const user = FolioAuth.requireRole("admin", "login.html");
 
@@ -589,8 +617,11 @@
         tutors: document.getElementById("panel-tutors"),
         courses: document.getElementById("panel-courses"),
         blog: document.getElementById("panel-blog"),
+        accounts: document.getElementById("panel-accounts"),
         settings: document.getElementById("panel-settings"),
       };
+
+      let accountsQuery = "";
 
       function showPanel(name) {
         navButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.panel === name));
@@ -1448,6 +1479,55 @@
             .join("");
         }
 
+        const members = FolioAuth.getUsers()
+          .filter((u) => u.role === "customer")
+          .filter((u) => {
+            if (!accountsQuery) return true;
+            const q = accountsQuery.toLowerCase();
+            return (
+              String(u.name || "").toLowerCase().includes(q) ||
+              String(u.email || "").toLowerCase().includes(q)
+            );
+          });
+        const accountsBody = document.getElementById("accounts-body");
+        const accountsEmpty = document.getElementById("accounts-empty");
+        if (!accountsBody) {
+          /* panel may be mid-load */
+        } else if (!members.length) {
+          accountsBody.innerHTML = "";
+          accountsEmpty.hidden = false;
+        } else {
+          accountsEmpty.hidden = true;
+          accountsBody.innerHTML = members
+            .map((u) => {
+              const suspended = FolioAuth.isAccountSuspended(u);
+              const role = FolioAuth.socialRoleLabel(u);
+              const counts = FolioAuth.getFollowCounts(u.id);
+              return `
+            <tr>
+              <td>
+                <strong>${escapeHtml(u.name)}</strong><br />
+                <span style="color:var(--muted)">${escapeHtml(u.email)}</span>
+                ${suspended && u.suspendReason ? `<br /><span style="color:var(--muted)">Reason: ${escapeHtml(u.suspendReason)}</span>` : ""}
+              </td>
+              <td>${escapeHtml(role)}</td>
+              <td>${badge(suspended ? "suspended" : "active")}</td>
+              <td>${counts.followers}</td>
+              <td>
+                <div class="row-actions">
+                  ${
+                    suspended
+                      ? `<button class="tiny ok" type="button" data-unsuspend="${u.id}">Unsuspend</button>`
+                      : `<button class="tiny" type="button" data-suspend="${u.id}">Suspend</button>`
+                  }
+                  <button class="tiny danger" type="button" data-delete-account="${u.id}">Delete</button>
+                </div>
+              </td>
+            </tr>`;
+            })
+            .join("");
+        }
+
         document.querySelectorAll("[data-approve]").forEach((btn) => {
           btn.addEventListener("click", () => {
             FolioAuth.updateListing(btn.dataset.approve, { status: "live" });
@@ -1545,8 +1625,43 @@
         });
         document.querySelectorAll("[data-del-blog]").forEach((btn) => {
           btn.addEventListener("click", () => {
-            if (!window.confirm("Delete this blog article?")) return;
+            if (!window.confirm("Delete this social post?")) return;
             FolioAuth.deleteBlogPost(btn.dataset.delBlog, user.id);
+            render();
+          });
+        });
+
+        document.querySelectorAll("[data-suspend]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const reason = window.prompt("Suspension reason:", "Violated Folio community rules.");
+            if (reason == null) return;
+            const result = FolioAuth.suspendAccount({
+              adminId: user.id,
+              userId: btn.dataset.suspend,
+              reason,
+            });
+            if (!result.ok) window.alert(result.error);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-unsuspend]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const result = FolioAuth.unsuspendAccount({
+              adminId: user.id,
+              userId: btn.dataset.unsuspend,
+            });
+            if (!result.ok) window.alert(result.error);
+            render();
+          });
+        });
+        document.querySelectorAll("[data-delete-account]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            if (!window.confirm("Permanently delete this account and their social posts?")) return;
+            const result = FolioAuth.deleteAccount({
+              adminId: user.id,
+              userId: btn.dataset.deleteAccount,
+            });
+            if (!result.ok) window.alert(result.error);
             render();
           });
         });
@@ -1778,6 +1893,14 @@
         e.target.reset();
         render();
       });
+
+      const accountsSearch = document.getElementById("accounts-search");
+      if (accountsSearch) {
+        accountsSearch.addEventListener("input", () => {
+          accountsQuery = accountsSearch.value.trim();
+          render();
+        });
+      }
 
       FolioAuth.mountCurrencySelect(document.getElementById("currency-select"), () => render());
       window.addEventListener("folio:currency", () => render());

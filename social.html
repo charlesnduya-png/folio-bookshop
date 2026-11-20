@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=27" />
+  <link rel="stylesheet" href="css/app.css?v=28" />
 </head>
 <body>
   <header class="topbar">
@@ -47,14 +47,48 @@
       <div class="social-hero-copy">
         <p class="school-kicker">Community</p>
         <h1 class="page-title">Social</h1>
-        <p class="page-sub">Updates from Folio — reading notes, school news, and marketplace moments.</p>
+        <p class="page-sub">Students and tutors share updates, follow each other, and stay in the Folio loop.</p>
       </div>
     </header>
+
+    <section class="social-composer" id="social-composer" hidden>
+      <h2>Share with Folio</h2>
+      <p class="hint" id="composer-hint">Post as a student or tutor.</p>
+      <form id="social-post-form">
+        <p class="form-msg" id="social-post-msg"></p>
+        <div class="field">
+          <label for="social-title">Title</label>
+          <input id="social-title" type="text" required maxlength="120" placeholder="What’s happening?" />
+        </div>
+        <div class="field">
+          <label for="social-body">Post</label>
+          <textarea id="social-body" required maxlength="4000" placeholder="Write a note for the community…"></textarea>
+        </div>
+        <div class="field">
+          <label for="social-cover">Image URL <span class="optional">(optional)</span></label>
+          <input id="social-cover" type="url" placeholder="https://…" />
+        </div>
+        <button class="btn btn-leaf" type="submit">Publish</button>
+      </form>
+    </section>
+
+    <p class="social-signin-prompt" id="social-signin" hidden>
+      <a href="login.html">Sign in</a> as a student or tutor to post and follow people.
+    </p>
+
+    <div class="social-feed-toolbar">
+      <div class="social-feed-tabs" role="tablist" aria-label="Feed filter">
+        <button type="button" class="is-active" data-feed="all">Everyone</button>
+        <button type="button" data-feed="following">Following</button>
+      </div>
+      <p class="hint" id="my-follow-counts" hidden></p>
+    </div>
+
     <div id="social-list" class="blog-list social-list"></div>
     <p class="empty" id="social-empty" hidden>No social posts yet.</p>
   </main>
 
-  <script src="js/auth.js?v=25"></script>
+  <script src="js/auth.js?v=28"></script>
   <script>
     function escapeHtml(value) {
       return String(value)
@@ -64,39 +98,146 @@
         .replaceAll('"', "&quot;");
     }
 
+    let feedMode = "all";
+    const me = FolioAuth.getCurrentUser();
+
+    function renderComposer() {
+      const composer = document.getElementById("social-composer");
+      const signin = document.getElementById("social-signin");
+      const counts = document.getElementById("my-follow-counts");
+      if (me && FolioAuth.canPostToSocial(me)) {
+        composer.hidden = false;
+        signin.hidden = true;
+        document.getElementById("composer-hint").textContent =
+          `Posting as ${me.name} · ${FolioAuth.socialRoleLabel(me)}`;
+        const c = FolioAuth.getFollowCounts(me.id);
+        counts.hidden = false;
+        counts.textContent = `${c.followers} followers · ${c.following} following`;
+      } else {
+        composer.hidden = true;
+        signin.hidden = false;
+        counts.hidden = true;
+      }
+    }
+
+    function followButton(authorId) {
+      if (!me || me.id === authorId || me.role === "admin") return "";
+      const on = FolioAuth.isFollowing(me.id, authorId);
+      return `<button class="btn ${on ? "btn-light" : "btn-leaf"} social-follow-btn" type="button" data-follow="${escapeHtml(authorId)}">${on ? "Following" : "Follow"}</button>`;
+    }
+
     function renderSocialList() {
-      const posts = (FolioAuth.getSocialPosts || FolioAuth.getBlogPosts)().filter(
-        (p) => p.status === "published"
-      );
+      const posts = FolioAuth.getVisibleSocialPosts({
+        followingOnly: feedMode === "following",
+        viewerId: me ? me.id : null,
+      });
       const list = document.getElementById("social-list");
       const empty = document.getElementById("social-empty");
       if (!posts.length) {
         list.innerHTML = "";
         empty.hidden = false;
+        empty.textContent =
+          feedMode === "following"
+            ? "No posts from people you follow yet."
+            : "No social posts yet. Be the first to share.";
         return;
       }
       empty.hidden = true;
       list.innerHTML = posts
-        .map(
-          (p) => `
+        .map((p) => {
+          const canDelete = me && (me.role === "admin" || me.id === p.authorId);
+          return `
         <article class="blog-card social-card">
           ${
             p.coverImage
               ? `<a class="blog-card-cover" href="social-post.html?id=${encodeURIComponent(p.id)}" style="background-image:url('${escapeHtml(p.coverImage)}')" aria-hidden="true"></a>`
-              : ""
+              : `<div class="blog-card-cover social-card-fallback" aria-hidden="true"></div>`
           }
           <div class="blog-card-body">
-            <p class="hint" style="margin:0 0 6px">${escapeHtml((p.createdAt || "").slice(0, 10))} · ${escapeHtml(p.authorName || "Folio")}</p>
+            <div class="social-card-meta">
+              <div>
+                <p class="social-author">${escapeHtml(p.authorName || "Folio")} <span>${escapeHtml(p.authorRole || "")}</span></p>
+                <p class="hint" style="margin:0">${escapeHtml((p.createdAt || "").slice(0, 10))}</p>
+              </div>
+              ${followButton(p.authorId)}
+            </div>
             <h2><a href="social-post.html?id=${encodeURIComponent(p.id)}">${escapeHtml(p.title)}</a></h2>
             <p>${escapeHtml(p.excerpt || "")}</p>
-            <a class="btn btn-leaf" href="social-post.html?id=${encodeURIComponent(p.id)}">View post</a>
+            <div class="social-card-actions">
+              <a class="btn btn-leaf" href="social-post.html?id=${encodeURIComponent(p.id)}">View post</a>
+              ${canDelete ? `<button class="btn btn-light" type="button" data-del-post="${escapeHtml(p.id)}">Delete</button>` : ""}
+            </div>
           </div>
-        </article>`
-        )
+        </article>`;
+        })
         .join("");
+
+      list.querySelectorAll("[data-follow]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (!me) {
+            window.location.href = "login.html";
+            return;
+          }
+          FolioAuth.toggleFollow({ followerId: me.id, followingId: btn.dataset.follow });
+          renderComposer();
+          renderSocialList();
+        });
+      });
+
+      list.querySelectorAll("[data-del-post]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (!window.confirm("Delete this post?")) return;
+          FolioAuth.deleteSocialPost(btn.dataset.delPost, me.id);
+          renderSocialList();
+        });
+      });
     }
 
+    document.querySelectorAll("[data-feed]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        feedMode = btn.dataset.feed;
+        document.querySelectorAll("[data-feed]").forEach((b) => {
+          b.classList.toggle("is-active", b === btn);
+        });
+        if (feedMode === "following" && !me) {
+          window.location.href = "login.html";
+          return;
+        }
+        renderSocialList();
+      });
+    });
+
+    document.getElementById("social-post-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("social-post-msg");
+      if (!me) {
+        window.location.href = "login.html";
+        return;
+      }
+      const result = FolioAuth.createSocialPost({
+        authorId: me.id,
+        authorName: me.name,
+        title: document.getElementById("social-title").value,
+        body: document.getElementById("social-body").value,
+        coverImage: document.getElementById("social-cover").value,
+      });
+      if (!result.ok) {
+        msg.textContent = result.error;
+        msg.classList.remove("ok");
+        return;
+      }
+      msg.textContent = "Post published.";
+      msg.classList.add("ok");
+      e.target.reset();
+      feedMode = "all";
+      document.querySelectorAll("[data-feed]").forEach((b) => {
+        b.classList.toggle("is-active", b.dataset.feed === "all");
+      });
+      renderSocialList();
+    });
+
     FolioAuth.mountCurrencySelect(document.getElementById("currency-select"));
+    renderComposer();
     renderSocialList();
   </script>
 </body>

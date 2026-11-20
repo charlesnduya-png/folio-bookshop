@@ -12,6 +12,7 @@
   const COURSES_KEY = "folio_courses";
   const ENROLLMENTS_KEY = "folio_enrollments";
   const BLOG_KEY = "folio_blog_posts";
+  const FOLLOWS_KEY = "folio_follows";
   const DISPLAY_CURRENCY_KEY = "folio_display_currency";
   const DEFAULT_SETTINGS = {
     storeName: "Folio",
@@ -334,6 +335,7 @@
     }
     if (!read(ENROLLMENTS_KEY, null)) write(ENROLLMENTS_KEY, []);
     if (!read(BLOG_KEY, null)) write(BLOG_KEY, []);
+    if (!read(FOLLOWS_KEY, null)) write(FOLLOWS_KEY, []);
   }
 
   seed();
@@ -350,7 +352,30 @@
     getCurrentUser() {
       const session = this.getSession();
       if (!session) return null;
-      return this.getUsers().find((u) => u.id === session.userId) || null;
+      const user = this.getUsers().find((u) => u.id === session.userId) || null;
+      if (user && this.isAccountSuspended(user)) {
+        this.logout();
+        return null;
+      }
+      return user;
+    },
+
+    isAccountSuspended(user) {
+      return !!(user && user.accountStatus === "suspended");
+    },
+
+    canPostToSocial(user) {
+      if (!user || this.isAccountSuspended(user)) return false;
+      if (user.role === "admin") return true;
+      if (user.role !== "customer") return false;
+      return true;
+    },
+
+    socialRoleLabel(user) {
+      if (!user) return "Member";
+      if (user.role === "admin") return "Admin";
+      if (user.instructorStatus === "approved") return "Tutor";
+      return "Student";
     },
 
     register({
@@ -609,6 +634,12 @@
         (u) => u.email === cleanEmail && u.password === String(password || "")
       );
       if (!user) return { ok: false, error: "Invalid email or password." };
+      if (this.isAccountSuspended(user)) {
+        return {
+          ok: false,
+          error: "This account is suspended. Contact Folio support.",
+        };
+      }
       write(SESSION_KEY, { userId: user.id });
       return { ok: true, user };
     },
@@ -2544,10 +2575,38 @@
       return this.getBlogPostById(id);
     },
 
+    getVisibleSocialPosts({ followingOnly = false, viewerId = null } = {}) {
+      const usersById = new Map(this.getUsers().map((u) => [u.id, u]));
+      let posts = this.getSocialPosts().filter((p) => {
+        if (p.status !== "published") return false;
+        const author = usersById.get(p.authorId);
+        if (author && this.isAccountSuspended(author)) return false;
+        return true;
+      });
+      if (followingOnly && viewerId) {
+        const following = new Set(this.getFollowingIds(viewerId));
+        posts = posts.filter((p) => p.authorId === viewerId || following.has(p.authorId));
+      }
+      return posts.map((p) => {
+        const author = usersById.get(p.authorId);
+        return {
+          ...p,
+          authorName: (author && author.name) || p.authorName || "Folio",
+          authorRole: this.socialRoleLabel(author),
+          authorImage: (author && author.profileImage) || "",
+        };
+      });
+    },
+
     createBlogPost({ authorId, authorName, title, excerpt, body, coverImage }) {
       const author = this.getUsers().find((u) => u.id === authorId);
-      if (!author || author.role !== "admin") {
-        return { ok: false, error: "Only admins can publish social posts." };
+      if (!this.canPostToSocial(author)) {
+        return {
+          ok: false,
+          error: author && this.isAccountSuspended(author)
+            ? "Your account is suspended."
+            : "Sign in as a student or tutor to post.",
+        };
       }
       const cleanTitle = String(title || "").trim();
       const cleanBody = String(body || "").trim();
@@ -2562,6 +2621,7 @@
         coverImage: String(coverImage || "").trim(),
         authorId,
         authorName: authorName || author.name || "Folio",
+        authorRole: this.socialRoleLabel(author),
         status: "published",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -2576,21 +2636,182 @@
       return this.createBlogPost(payload);
     },
 
-    deleteBlogPost(postId, adminId) {
-      const admin = this.getUsers().find((u) => u.id === adminId);
-      if (!admin || admin.role !== "admin") {
-        return { ok: false, error: "Only admins can delete social posts." };
-      }
+    deleteBlogPost(postId, actorId) {
+      const actor = this.getUsers().find((u) => u.id === actorId);
+      if (!actor) return { ok: false, error: "Sign in to delete a post." };
       const items = this.getBlogPosts();
-      if (!items.some((p) => p.id === postId)) {
-        return { ok: false, error: "Post not found." };
+      const post = items.find((p) => p.id === postId);
+      if (!post) return { ok: false, error: "Post not found." };
+      const isAdmin = actor.role === "admin";
+      const isAuthor = post.authorId === actorId;
+      if (!isAdmin && !isAuthor) {
+        return { ok: false, error: "Only the author or an admin can delete this post." };
       }
       this.saveBlogPosts(items.filter((p) => p.id !== postId));
       return { ok: true };
     },
 
-    deleteSocialPost(postId, adminId) {
-      return this.deleteBlogPost(postId, adminId);
+    deleteSocialPost(postId, actorId) {
+      return this.deleteBlogPost(postId, actorId);
+    },
+
+    getFollows() {
+      return read(FOLLOWS_KEY, []);
+    },
+
+    saveFollows(items) {
+      write(FOLLOWS_KEY, items);
+    },
+
+    getFollowingIds(userId) {
+      return this.getFollows()
+        .filter((f) => f.followerId === userId)
+        .map((f) => f.followingId);
+    },
+
+    getFollowerIds(userId) {
+      return this.getFollows()
+        .filter((f) => f.followingId === userId)
+        .map((f) => f.followerId);
+    },
+
+    isFollowing(followerId, followingId) {
+      if (!followerId || !followingId || followerId === followingId) return false;
+      return this.getFollows().some(
+        (f) => f.followerId === followerId && f.followingId === followingId
+      );
+    },
+
+    getFollowCounts(userId) {
+      return {
+        followers: this.getFollowerIds(userId).length,
+        following: this.getFollowingIds(userId).length,
+      };
+    },
+
+    followUser({ followerId, followingId }) {
+      const follower = this.getUsers().find((u) => u.id === followerId);
+      const target = this.getUsers().find((u) => u.id === followingId);
+      if (!follower || this.isAccountSuspended(follower)) {
+        return { ok: false, error: "Sign in to follow people." };
+      }
+      if (!target || target.role === "admin") {
+        return { ok: false, error: "That profile cannot be followed." };
+      }
+      if (this.isAccountSuspended(target)) {
+        return { ok: false, error: "That account is unavailable." };
+      }
+      if (followerId === followingId) {
+        return { ok: false, error: "You cannot follow yourself." };
+      }
+      if (this.isFollowing(followerId, followingId)) {
+        return { ok: true, following: true };
+      }
+      const items = this.getFollows();
+      items.push({
+        id: "fol_" + Date.now(),
+        followerId,
+        followingId,
+        createdAt: new Date().toISOString(),
+      });
+      this.saveFollows(items);
+      return { ok: true, following: true };
+    },
+
+    unfollowUser({ followerId, followingId }) {
+      const follower = this.getUsers().find((u) => u.id === followerId);
+      if (!follower) return { ok: false, error: "Sign in to unfollow." };
+      this.saveFollows(
+        this.getFollows().filter(
+          (f) => !(f.followerId === followerId && f.followingId === followingId)
+        )
+      );
+      return { ok: true, following: false };
+    },
+
+    toggleFollow({ followerId, followingId }) {
+      if (this.isFollowing(followerId, followingId)) {
+        return this.unfollowUser({ followerId, followingId });
+      }
+      return this.followUser({ followerId, followingId });
+    },
+
+    suspendAccount({ adminId, userId, reason }) {
+      const admin = this.getUsers().find((u) => u.id === adminId);
+      if (!admin || admin.role !== "admin") {
+        return { ok: false, error: "Only admins can suspend accounts." };
+      }
+      const target = this.getUsers().find((u) => u.id === userId);
+      if (!target || target.role === "admin") {
+        return { ok: false, error: "Account not found." };
+      }
+      const cleanReason = String(reason || "").trim() || "Violated Folio community rules.";
+      this.updateUser(userId, {
+        accountStatus: "suspended",
+        suspendReason: cleanReason,
+        suspendedAt: new Date().toISOString(),
+        suspendedBy: adminId,
+      });
+      const session = this.getSession();
+      if (session && session.userId === userId) {
+        this.logout();
+      }
+      this.addNotification({
+        title: "Account suspended",
+        body: `Your Folio account was suspended. Reason: ${cleanReason}`,
+        userId,
+        audience: "user",
+      });
+      return { ok: true, user: this.getUsers().find((u) => u.id === userId) };
+    },
+
+    unsuspendAccount({ adminId, userId }) {
+      const admin = this.getUsers().find((u) => u.id === adminId);
+      if (!admin || admin.role !== "admin") {
+        return { ok: false, error: "Only admins can unsuspend accounts." };
+      }
+      const target = this.getUsers().find((u) => u.id === userId);
+      if (!target) return { ok: false, error: "Account not found." };
+      this.updateUser(userId, {
+        accountStatus: "active",
+        suspendReason: "",
+        suspendedAt: "",
+        suspendedBy: "",
+        unsuspendedAt: new Date().toISOString(),
+      });
+      this.addNotification({
+        title: "Account restored",
+        body: "Your Folio account suspension was lifted. You can sign in again.",
+        userId,
+        audience: "user",
+      });
+      return { ok: true, user: this.getUsers().find((u) => u.id === userId) };
+    },
+
+    deleteAccount({ adminId, userId }) {
+      const admin = this.getUsers().find((u) => u.id === adminId);
+      if (!admin || admin.role !== "admin") {
+        return { ok: false, error: "Only admins can delete accounts." };
+      }
+      const target = this.getUsers().find((u) => u.id === userId);
+      if (!target || target.role === "admin") {
+        return { ok: false, error: "Account not found." };
+      }
+      write(
+        USERS_KEY,
+        this.getUsers().filter((u) => u.id !== userId)
+      );
+      this.saveBlogPosts(this.getBlogPosts().filter((p) => p.authorId !== userId));
+      this.saveFollows(
+        this.getFollows().filter(
+          (f) => f.followerId !== userId && f.followingId !== userId
+        )
+      );
+      const session = this.getSession();
+      if (session && session.userId === userId) {
+        this.logout();
+      }
+      return { ok: true };
     },
 
     isInstructorApproved(user) {
