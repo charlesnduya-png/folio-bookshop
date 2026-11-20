@@ -98,7 +98,7 @@
     </article>
   </main>
 
-  <script src="js/auth.js?v=23"></script>
+  <script src="js/auth.js?v=25"></script>
   <script>
     function money(n) {
       return FolioAuth.formatMoney(n);
@@ -122,15 +122,26 @@
       return new URLSearchParams(window.location.search).get("id") || "";
     }
 
+    function wantsResume() {
+      return new URLSearchParams(window.location.search).get("resume") === "1";
+    }
+
     const lessonVideo = document.getElementById("course-lesson-video");
     let lessonMaxWatched = 0;
     let lessonSeekGuard = false;
     let lessonIsSeeking = false;
+    let activeChapterId = "";
+    let pendingResumeTime = 0;
+    let pendingResumeMax = 0;
+    let lastSavedAt = 0;
+    let didAutoResume = false;
 
     function resetLessonWatchProgress() {
       lessonMaxWatched = 0;
       lessonSeekGuard = false;
       lessonIsSeeking = false;
+      pendingResumeTime = 0;
+      pendingResumeMax = 0;
     }
 
     function clampLessonSeek() {
@@ -145,20 +156,79 @@
       }
     }
 
+    function persistLessonProgress(force) {
+      const user = FolioAuth.getCurrentUser();
+      const courseId = courseIdFromUrl();
+      if (!user || !courseId || !activeChapterId || !lessonVideo) return;
+      const now = Date.now();
+      if (!force && now - lastSavedAt < 2500) return;
+      lastSavedAt = now;
+      FolioAuth.saveLearningResume({
+        userId: user.id,
+        courseId,
+        chapterId: activeChapterId,
+        videoTime: lessonVideo.currentTime || 0,
+        maxWatched: lessonMaxWatched,
+      });
+    }
+
+    async function playChapterLesson({ chapterId, videoId, caption, resumeTime, resumeMax }) {
+      const videoWrap = document.getElementById("course-video-wrap");
+      const videoCaption = document.getElementById("course-video-caption");
+      const blob = await FolioAuth.getVideoBlob(videoId);
+      if (!blob) {
+        showMsg("Lesson video is not available yet.", false);
+        return false;
+      }
+      const old = lessonVideo.getAttribute("src");
+      if (old && old.startsWith("blob:")) URL.revokeObjectURL(old);
+
+      activeChapterId = chapterId || "";
+      pendingResumeTime = Math.max(0, Number(resumeTime) || 0);
+      pendingResumeMax = Math.max(pendingResumeTime, Number(resumeMax) || 0);
+      lessonMaxWatched = pendingResumeMax;
+      lessonSeekGuard = false;
+      lessonIsSeeking = false;
+
+      videoWrap.hidden = false;
+      videoCaption.textContent = caption || "Lesson video";
+      lessonVideo.src = URL.createObjectURL(blob);
+      lessonVideo.playbackRate = 1;
+      try {
+        await lessonVideo.play();
+      } catch (_) {}
+      return true;
+    }
+
     if (lessonVideo) {
       lessonVideo.addEventListener("loadedmetadata", () => {
-        resetLessonWatchProgress();
+        if (pendingResumeMax > 0) {
+          lessonMaxWatched = Math.max(lessonMaxWatched, pendingResumeMax);
+        }
+        if (pendingResumeTime > 0.5) {
+          const target = Math.min(pendingResumeTime, lessonVideo.duration || pendingResumeTime);
+          lessonSeekGuard = true;
+          try {
+            lessonVideo.currentTime = target;
+          } catch (_) {}
+          lessonSeekGuard = false;
+          lessonMaxWatched = Math.max(lessonMaxWatched, target);
+        }
+        pendingResumeTime = 0;
+        pendingResumeMax = 0;
       });
       lessonVideo.addEventListener("timeupdate", () => {
         if (lessonSeekGuard || lessonIsSeeking || lessonVideo.seeking) return;
         const t = Number(lessonVideo.currentTime) || 0;
-        // Only advance through natural playback, not scrub jumps.
         if (t >= lessonMaxWatched && t - lessonMaxWatched <= 1.25) {
           lessonMaxWatched = t;
         } else if (t > lessonMaxWatched + 0.25) {
           clampLessonSeek();
         }
+        persistLessonProgress(false);
       });
+      lessonVideo.addEventListener("pause", () => persistLessonProgress(true));
+      lessonVideo.addEventListener("ended", () => persistLessonProgress(true));
       lessonVideo.addEventListener("seeking", () => {
         lessonIsSeeking = true;
         clampLessonSeek();
@@ -166,6 +236,7 @@
       lessonVideo.addEventListener("seeked", () => {
         clampLessonSeek();
         lessonIsSeeking = false;
+        persistLessonProgress(true);
       });
       lessonVideo.addEventListener("ratechange", () => {
         if (lessonVideo.playbackRate > 1) lessonVideo.playbackRate = 1;
@@ -177,6 +248,7 @@
           e.stopPropagation();
         }
       });
+      window.addEventListener("beforeunload", () => persistLessonProgress(true));
     }
 
     function renderCourse() {
@@ -349,18 +421,46 @@
 
             chaptersBox.querySelectorAll("[data-play-chapter]:not([disabled])").forEach((btn) => {
               btn.addEventListener("click", async () => {
-                const blob = await FolioAuth.getVideoBlob(btn.dataset.videoId);
-                if (!blob) return;
-                const old = videoEl.getAttribute("src");
-                if (old && old.startsWith("blob:")) URL.revokeObjectURL(old);
-                resetLessonWatchProgress();
-                videoWrap.hidden = false;
-                videoCaption.textContent = btn.dataset.caption || "Lesson video";
-                videoEl.src = URL.createObjectURL(blob);
-                videoEl.playbackRate = 1;
-                videoEl.play().catch(() => {});
+                const enrollmentNow = FolioAuth.getEnrollment(course.id, (FolioAuth.getCurrentUser() || {}).id);
+                const same = enrollmentNow && enrollmentNow.lastChapterId === btn.dataset.playChapter;
+                await playChapterLesson({
+                  chapterId: btn.dataset.playChapter,
+                  videoId: btn.dataset.videoId,
+                  caption: btn.dataset.caption || "Lesson video",
+                  resumeTime: same ? Number(enrollmentNow.lastVideoTime) || 0 : 0,
+                  resumeMax: same ? Number(enrollmentNow.lastMaxWatched) || 0 : 0,
+                });
               });
             });
+
+            if (!didAutoResume && (wantsResume() || !!(refreshed && refreshed.lastChapterId))) {
+              const target = FolioAuth.getResumeTarget(course, refreshed);
+              if (target && target.videoId) {
+                const row = chaptersBox.querySelector(
+                  `[data-play-chapter="${(window.CSS && CSS.escape) ? CSS.escape(target.chapterId) : target.chapterId.replace(/"/g, '\\"')}"]`
+                );
+                if (row && !row.disabled) {
+                  didAutoResume = true;
+                  playChapterLesson({
+                    chapterId: target.chapterId,
+                    videoId: target.videoId,
+                    caption: target.title,
+                    resumeTime: target.videoTime,
+                    resumeMax: target.maxWatched,
+                  }).then((ok) => {
+                    if (ok) {
+                      showMsg(
+                        target.videoTime > 5
+                          ? `Resumed “${target.title}” where you left off.`
+                          : `Opened “${target.title}” to continue learning.`,
+                        true
+                      );
+                      videoWrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    }
+                  });
+                }
+              }
+            }
 
             chaptersBox.querySelectorAll("[data-take-test]").forEach((btn) => {
               btn.addEventListener("click", () => {
@@ -455,7 +555,13 @@
             showMsg(result.error, false);
             return;
           }
-          showMsg("Payment successful. You are enrolled.", true);
+          showMsg("Payment successful. You are enrolled. Opening your lesson…", true);
+          didAutoResume = false;
+          history.replaceState(
+            {},
+            "",
+            `course.html?id=${encodeURIComponent(course.id)}&resume=1`
+          );
           renderCourse();
         });
       }

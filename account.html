@@ -203,7 +203,7 @@
           <div class="panel">
             <h2>My learning</h2>
             <p class="hint" style="margin-top:0;margin-bottom:16px">
-              Paid enrollments only. When the learning duration ends, request a certificate.
+              Paid enrollments only. Use Continue learning to reopen a course and resume where you left off.
             </p>
             <p class="form-msg" id="learning-msg"></p>
             <div id="my-learning"></div>
@@ -382,7 +382,7 @@
     </div>
   </main>
 
-  <script src="js/auth.js?v=24"></script>
+  <script src="js/auth.js?v=25"></script>
   <script>
     const user = FolioAuth.requireAuth(
       "login.html?next=" + encodeURIComponent("account.html" + (location.hash || ""))
@@ -664,23 +664,33 @@
         }
         box.innerHTML = items
           .map((e) => {
-            let action = "";
+            const course = FolioAuth.getCourseById(e.courseId);
+            const resume = course ? FolioAuth.getResumeTarget(course, e) : null;
+            const resumeLabel = e.lastChapterId || e.lastVideoTime > 0 ? "Continue learning" : "Start learning";
+            let action = `<a class="tiny ok" href="course.html?id=${encodeURIComponent(
+              e.courseId
+            )}&resume=1">${resumeLabel}</a>`;
             if (e.certStatus === "issued") {
-              action = `<span class="badge badge-live">Certificate issued</span>`;
+              action += `<span class="badge badge-live">Certificate issued</span>`;
             } else if (e.certStatus === "requested") {
-              action = `<span class="badge badge-pending">Certificate pending</span>`;
+              action += `<span class="badge badge-pending">Certificate pending</span>`;
             } else if (e.status === "completed") {
-              action = `<button class="tiny ok" type="button" data-cert="${e.id}">Request certificate</button>`;
+              action += `<button class="tiny ok" type="button" data-cert="${e.id}">Request certificate</button>`;
             } else {
-              action = `<span class="badge badge-live">In progress</span>`;
+              action += `<span class="badge badge-live">In progress</span>`;
             }
+            const chapterHint = resume
+              ? ` · Resume “${escapeHtml(resume.title)}”${
+                  resume.videoTime > 5 ? ` at ${Math.floor(resume.videoTime / 60)}:${String(Math.floor(resume.videoTime % 60)).padStart(2, "0")}` : ""
+                }`
+              : "";
             return `
               <article class="listing-card">
                 <div class="listing-cover" aria-hidden="true"></div>
                 <div>
                   <h3>${escapeHtml(e.courseTitle)}</h3>
                   <p>Paid ${money(e.amount)} · ${e.durationDays} days · ends ${(e.endAt || "").slice(0, 10)}</p>
-                  <p style="margin-top:6px">${badge(e.status)} · Instructor ${escapeHtml(e.instructorName || "")}</p>
+                  <p style="margin-top:6px">${badge(e.status)} · Instructor ${escapeHtml(e.instructorName || "")}${chapterHint}</p>
                 </div>
                 <div class="row-actions">${action}</div>
               </article>`;

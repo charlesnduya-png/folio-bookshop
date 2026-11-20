@@ -2228,11 +2228,54 @@
         certRequestedAt: null,
         certIssuedAt: null,
         chapterProgress: {},
+        lastChapterId: "",
+        lastVideoTime: 0,
+        lastMaxWatched: 0,
+        lastOpenedAt: paidAt.toISOString(),
       };
       const items = this.getEnrollments();
       items.unshift(enrollment);
       this.saveEnrollments(items);
       return { ok: true, enrollment };
+    },
+
+    saveLearningResume({ userId, courseId, chapterId, videoTime, maxWatched }) {
+      const enrollment = this.getEnrollment(courseId, userId);
+      if (!enrollment) return { ok: false, error: "Enrollment not found." };
+      const time = Math.max(0, Number(videoTime) || 0);
+      const max = Math.max(time, Number(maxWatched) || 0, Number(enrollment.lastMaxWatched) || 0);
+      this.updateEnrollment(enrollment.id, {
+        lastChapterId: String(chapterId || enrollment.lastChapterId || ""),
+        lastVideoTime: Number(time.toFixed(2)),
+        lastMaxWatched: Number(max.toFixed(2)),
+        lastOpenedAt: new Date().toISOString(),
+      });
+      return { ok: true, enrollment: this.getEnrollment(courseId, userId) };
+    },
+
+    getResumeTarget(course, enrollment) {
+      if (!course || !enrollment) return null;
+      const access = this.getStudentChapterAccess(course, enrollment);
+      if (!access.length) return null;
+      const savedId = enrollment.lastChapterId || "";
+      let chapter = access.find((ch) => ch.id === savedId && ch.unlocked) || null;
+      if (!chapter) {
+        chapter = access.find((ch) => ch.unlocked && !ch.passed) || access.find((ch) => ch.unlocked) || access[0];
+      }
+      if (!chapter || !chapter.unlocked) return null;
+      const sameChapter = chapter.id === savedId;
+      return {
+        chapterId: chapter.id,
+        videoId: chapter.videoId || "",
+        title: chapter.title || "Lesson",
+        videoTime: sameChapter ? Math.max(0, Number(enrollment.lastVideoTime) || 0) : 0,
+        maxWatched: sameChapter
+          ? Math.max(
+              Number(enrollment.lastMaxWatched) || 0,
+              Number(enrollment.lastVideoTime) || 0
+            )
+          : 0,
+      };
     },
 
     refreshEnrollmentProgress(enrollment) {
