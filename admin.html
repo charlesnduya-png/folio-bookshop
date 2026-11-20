@@ -661,6 +661,8 @@
           requested: "badge-pending",
           published: "badge-live",
           hidden: "badge-rejected",
+          active: "badge-live",
+          suspended: "badge-rejected",
         };
         return `<span class="badge ${map[status] || "badge-pending"}">${status}</span>`;
       }
