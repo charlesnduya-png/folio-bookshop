@@ -2551,3 +2551,128 @@ body.admin-body th:last-child {
     padding: 20px 16px 40px;
   }
 }
+
+.legal-page {
+  max-width: 760px;
+}
+
+.legal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 28px;
+}
+
+.legal-nav a {
+  padding: 8px 14px;
+  border-radius: 980px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.legal-nav a:hover {
+  border-color: rgba(31, 107, 74, 0.35);
+  color: var(--leaf);
+}
+
+.legal-nav a.is-active {
+  background: var(--leaf);
+  border-color: var(--leaf);
+  color: #fff;
+}
+
+.legal-prose h2 {
+  margin: 28px 0 10px;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.legal-prose p,
+.legal-prose li {
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+.legal-prose ul {
+  margin: 0 0 16px;
+  padding-left: 1.2rem;
+}
+
+.legal-prose li + li {
+  margin-top: 6px;
+}
+
+.legal-prose a {
+  color: var(--leaf);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 20px;
+  font-size: 0.92rem;
+}
+
+.legal-table th,
+.legal-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.legal-table th {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .legal-table,
+  .legal-table thead,
+  .legal-table tbody,
+  .legal-table th,
+  .legal-table td,
+  .legal-table tr {
+    display: block;
+  }
+
+  .legal-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .legal-table tr {
+    margin-bottom: 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 8px 4px;
+  }
+
+  .legal-table td {
+    border: 0;
+    padding: 6px 12px;
+  }
+
+  .legal-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+}
