@@ -2592,12 +2592,50 @@ body.admin-body th:last-child {
   flex-shrink: 0;
 }
 
+.social-side-avatar-wrap {
+  margin: -36px auto 10px;
+  width: fit-content;
+  text-align: center;
+}
+
 .social-side-avatar {
   width: 72px;
   height: 72px;
-  margin: -36px auto 10px;
+  margin: 0 auto;
   border: 3px solid #fff;
   box-shadow: 0 0 0 1px var(--line);
+}
+
+.social-side-photo-btn {
+  display: inline-flex;
+  margin-top: 8px;
+  padding: 6px 12px;
+  border-radius: 980px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--leaf);
+  cursor: pointer;
+}
+
+.social-side-photo-btn:hover {
+  background: #eef7f2;
+}
+
+.social-side-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--leaf);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+#side-photo-msg {
+  margin: 8px 14px 0;
+  font-size: 0.8rem;
 }
 
 .social-side-card h2 {

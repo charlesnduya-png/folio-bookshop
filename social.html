@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=29" />
+  <link rel="stylesheet" href="css/app.css?v=30" />
 </head>
 <body class="social-body">
   <header class="topbar">
@@ -31,10 +31,18 @@
   <main class="shell social-feed-shell">
     <aside class="social-side-card" id="social-profile-card">
       <div class="social-side-banner" aria-hidden="true"></div>
-      <div class="social-side-avatar" id="side-avatar"></div>
+      <div class="social-side-avatar-wrap">
+        <div class="social-side-avatar" id="side-avatar"></div>
+        <label class="social-side-photo-btn" id="side-photo-label" hidden>
+          <input id="side-profile-image" type="file" accept="image/*" hidden />
+          <span id="side-photo-text">Add photo</span>
+        </label>
+      </div>
       <h2 id="side-name">Folio Social</h2>
       <p class="hint" id="side-role">Students and tutors share updates</p>
+      <p class="form-msg" id="side-photo-msg" hidden></p>
       <p class="social-side-stats" id="side-stats" hidden></p>
+      <a class="social-side-link" id="side-account-link" href="account.html#profile" hidden>Manage profile</a>
     </aside>
 
     <div class="social-feed-main">
@@ -75,7 +83,7 @@
     </div>
   </main>
 
-  <script src="js/auth.js?v=29"></script>
+  <script src="js/auth.js?v=30"></script>
   <script>
     function escapeHtml(value) {
       return String(value)
@@ -132,22 +140,32 @@
       }
     }
 
-    function renderSide() {
+    function renderSide(current) {
+      const person = current || me;
       const nameEl = document.getElementById("side-name");
       const roleEl = document.getElementById("side-role");
       const stats = document.getElementById("side-stats");
       const avatar = document.getElementById("side-avatar");
-      if (me) {
-        nameEl.textContent = me.name;
-        roleEl.textContent = FolioAuth.socialRoleLabel(me);
-        setAvatarEl(avatar, me.profileImage, me.name);
-        const c = FolioAuth.getFollowCounts(me.id);
+      const photoLabel = document.getElementById("side-photo-label");
+      const accountLink = document.getElementById("side-account-link");
+      if (person) {
+        nameEl.textContent = person.name;
+        roleEl.textContent = FolioAuth.socialRoleLabel(person);
+        setAvatarEl(avatar, person.profileImage, person.name);
+        photoLabel.hidden = false;
+        document.getElementById("side-photo-text").textContent = person.profileImage
+          ? "Change photo"
+          : "Add photo";
+        accountLink.hidden = false;
+        const c = FolioAuth.getFollowCounts(person.id);
         stats.hidden = false;
         stats.innerHTML = `<strong>${c.followers}</strong> followers · <strong>${c.following}</strong> following`;
       } else {
         nameEl.textContent = "Folio Social";
         roleEl.textContent = "Students and tutors share updates";
         setAvatarEl(avatar, "", "Folio");
+        photoLabel.hidden = true;
+        accountLink.hidden = true;
         stats.hidden = true;
       }
     }
@@ -385,6 +403,30 @@
       document.querySelectorAll("[data-feed]").forEach((b) => {
         b.classList.toggle("is-active", b.dataset.feed === "all");
       });
+      renderSocialList();
+    });
+
+    document.getElementById("side-profile-image").addEventListener("change", async (e) => {
+      const msg = document.getElementById("side-photo-msg");
+      if (!me) {
+        window.location.href = "login.html";
+        return;
+      }
+      const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+      msg.hidden = false;
+      msg.textContent = "Uploading photo…";
+      msg.classList.remove("ok");
+      const result = await FolioAuth.saveProfileImage(me.id, file);
+      e.target.value = "";
+      if (!result.ok) {
+        msg.textContent = result.error;
+        return;
+      }
+      Object.assign(me, result.user || FolioAuth.getCurrentUser() || {});
+      msg.textContent = "Profile photo updated.";
+      msg.classList.add("ok");
+      renderSide(me);
+      renderComposer();
       renderSocialList();
     });
 

@@ -34,6 +34,7 @@
     <div class="account-layout">
       <nav class="account-nav" aria-label="Account sections">
         <button type="button" class="active" data-panel="dashboard">Dashboard</button>
+        <button type="button" data-panel="profile">Profile</button>
         <button type="button" data-panel="books">My books</button>
         <button type="button" data-panel="listings">My listings</button>
         <button type="button" data-panel="learning">My learning</button>
@@ -75,6 +76,37 @@
           </div>
         </section>
 
+        <!-- Profile photo & details -->
+        <section class="account-panel" id="panel-profile" hidden>
+          <div class="panel">
+            <h2>Your profile</h2>
+            <p class="hint" style="margin-top:0;margin-bottom:16px">
+              Add a profile photo so students and tutors can recognize you on Social and in courses.
+            </p>
+            <p class="form-msg" id="account-profile-msg"></p>
+            <div class="profile-photo-row">
+              <div class="profile-avatar" id="account-profile-avatar" aria-hidden="true"></div>
+              <div class="profile-photo-actions">
+                <label for="account-profile-image">Profile photo</label>
+                <p class="hint" style="margin:4px 0 10px">JPG, PNG, or WebP · up to 5MB</p>
+                <div class="profile-photo-buttons">
+                  <label class="btn btn-light profile-file-btn" for="account-profile-image">Choose photo</label>
+                  <input id="account-profile-image" type="file" accept="image/*" hidden />
+                  <button class="btn btn-light" type="button" id="account-profile-image-remove">Remove</button>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label>Name</label>
+              <input id="profile-name" type="text" readonly />
+            </div>
+            <div class="field">
+              <label>Email</label>
+              <input id="profile-email" type="email" readonly />
+            </div>
+          </div>
+        </section>
+
         <!-- My books / sell -->
         <section class="account-panel" id="panel-books" hidden>
           <div class="panel" id="sell">
@@ -111,31 +143,6 @@
               </div>
               <button class="btn btn-leaf" type="submit">Upload listing</button>
             </form>
-          </div>
-
-          <div class="panel" style="margin-top:18px">
-            <h2>Profile</h2>
-            <p class="form-msg" id="account-profile-msg"></p>
-            <div class="profile-photo-row">
-              <div class="profile-avatar" id="account-profile-avatar" aria-hidden="true"></div>
-              <div class="profile-photo-actions">
-                <label for="account-profile-image">Profile photo</label>
-                <p class="hint" style="margin:4px 0 10px">JPG, PNG, or WebP · up to 5MB</p>
-                <div class="profile-photo-buttons">
-                  <label class="btn btn-light profile-file-btn" for="account-profile-image">Choose photo</label>
-                  <input id="account-profile-image" type="file" accept="image/*" hidden />
-                  <button class="btn btn-light" type="button" id="account-profile-image-remove">Remove</button>
-                </div>
-              </div>
-            </div>
-            <div class="field">
-              <label>Name</label>
-              <input id="profile-name" type="text" readonly />
-            </div>
-            <div class="field">
-              <label>Email</label>
-              <input id="profile-email" type="email" readonly />
-            </div>
           </div>
         </section>
 
@@ -382,7 +389,7 @@
     </div>
   </main>
 
-  <script src="js/auth.js?v=25"></script>
+  <script src="js/auth.js?v=30"></script>
   <script>
     const user = FolioAuth.requireAuth(
       "login.html?next=" + encodeURIComponent("account.html" + (location.hash || ""))
@@ -444,6 +451,7 @@
       const navButtons = [...document.querySelectorAll(".account-nav [data-panel]")];
       const panels = {
         dashboard: document.getElementById("panel-dashboard"),
+        profile: document.getElementById("panel-profile"),
         books: document.getElementById("panel-books"),
         listings: document.getElementById("panel-listings"),
         learning: document.getElementById("panel-learning"),
