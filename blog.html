@@ -2,82 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Blog — Folio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css" />
+  <meta http-equiv="refresh" content="0; url=social.html" />
+  <title>Redirecting to Social — Folio</title>
+  <script>window.location.replace("social.html");</script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="index.html" aria-label="Folio home">
-        <img src="assets/logo.png" alt="" width="36" height="36" />
-        <strong>Fol<span>io</span></strong>
-      </a>
-      <div class="topbar-actions">
-        <label class="currency-picker">
-          <span class="visually-hidden">Currency</span>
-          <select id="currency-select" aria-label="Display currency"></select>
-        </label>
-        <a class="btn btn-light" href="index.html">Shop</a>
-        <a class="btn btn-light" href="courses.html">Courses</a>
-        <a class="btn btn-dark" href="account.html">Account</a>
-      </div>
-    </div>
-  </header>
-
-  <main class="shell">
-    <p class="school-kicker">Folio Journal</p>
-    <h1 class="page-title">Blog</h1>
-    <p class="page-sub">Articles from the Folio team — reading notes, school updates, and marketplace stories.</p>
-    <div id="blog-list" class="blog-list"></div>
-    <p class="empty" id="blog-empty" hidden>No articles published yet.</p>
-  </main>
-
-  <script src="js/auth.js?v=17"></script>
-  <script>
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;");
-    }
-
-    function renderBlogList() {
-      const posts = FolioAuth.getBlogPosts().filter((p) => p.status === "published");
-      const list = document.getElementById("blog-list");
-      const empty = document.getElementById("blog-empty");
-      if (!posts.length) {
-        list.innerHTML = "";
-        empty.hidden = false;
-        return;
-      }
-      empty.hidden = true;
-      list.innerHTML = posts
-        .map(
-          (p) => `
-        <article class="blog-card">
-          ${
-            p.coverImage
-              ? `<a class="blog-card-cover" href="blog-post.html?id=${encodeURIComponent(p.id)}" style="background-image:url('${escapeHtml(p.coverImage)}')" aria-hidden="true"></a>`
-              : ""
-          }
-          <div class="blog-card-body">
-            <p class="hint" style="margin:0 0 6px">${escapeHtml((p.createdAt || "").slice(0, 10))} · ${escapeHtml(p.authorName || "Folio Admin")}</p>
-            <h2><a href="blog-post.html?id=${encodeURIComponent(p.id)}">${escapeHtml(p.title)}</a></h2>
-            <p>${escapeHtml(p.excerpt || "")}</p>
-            <a class="btn btn-leaf" href="blog-post.html?id=${encodeURIComponent(p.id)}">Read article</a>
-          </div>
-        </article>`
-        )
-        .join("");
-    }
-
-    FolioAuth.mountCurrencySelect(document.getElementById("currency-select"));
-    renderBlogList();
-  </script>
+  <p>Blog is now <a href="social.html">Social</a>.</p>
 </body>
 </html>

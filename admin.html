@@ -27,7 +27,7 @@
         <button type="button" data-panel="reviews">Reviews &amp; rating</button>
         <button type="button" data-panel="tutors">Tutors</button>
         <button type="button" data-panel="courses">Courses</button>
-        <button type="button" data-panel="blog">Blog</button>
+        <button type="button" data-panel="blog">Social</button>
         <button type="button" data-panel="settings">Settings</button>
       </nav>
 
@@ -511,36 +511,36 @@
           </div>
         </section>
 
-        <!-- Blog -->
+        <!-- Social -->
         <section class="admin-panel" id="panel-blog" hidden>
           <div class="admin-card">
-            <h2>Write a blog post</h2>
-            <p class="hint">Only admins can publish articles. They appear on the public Blog page.</p>
+            <h2>Share a social post</h2>
+            <p class="hint">Only admins can publish posts. They appear on the public Social page.</p>
             <form id="blog-form">
               <p class="form-msg" id="blog-form-msg"></p>
               <div class="field">
                 <label for="blog-title">Title</label>
-                <input id="blog-title" type="text" required placeholder="Article title" />
+                <input id="blog-title" type="text" required placeholder="Post title" />
               </div>
               <div class="field">
                 <label for="blog-excerpt">Short excerpt <span class="optional">(optional)</span></label>
-                <input id="blog-excerpt" type="text" placeholder="One-line summary for the blog list" />
+                <input id="blog-excerpt" type="text" placeholder="One-line summary for the Social feed" />
               </div>
               <div class="field">
                 <label for="blog-cover">Cover image URL <span class="optional">(optional)</span></label>
                 <input id="blog-cover" type="url" placeholder="https://…" />
               </div>
               <div class="field">
-                <label for="blog-body">Article</label>
-                <textarea id="blog-body" required placeholder="Write the full article…" style="min-height:180px"></textarea>
+                <label for="blog-body">Post</label>
+                <textarea id="blog-body" required placeholder="Write the social update…" style="min-height:180px"></textarea>
               </div>
-              <button class="btn btn-leaf" type="submit">Publish article</button>
-              <a class="btn btn-light" href="blog.html" target="_blank" rel="noopener">View public blog</a>
+              <button class="btn btn-leaf" type="submit">Publish post</button>
+              <a class="btn btn-light" href="social.html" target="_blank" rel="noopener">View Social</a>
             </form>
           </div>
 
           <div class="admin-card">
-            <h2>Published articles</h2>
+            <h2>Published posts</h2>
             <div class="table-wrap">
               <table>
                 <thead>
@@ -554,7 +554,7 @@
                 <tbody id="blog-posts-body"></tbody>
               </table>
             </div>
-            <p class="empty" id="blog-posts-empty" hidden>No blog posts yet.</p>
+            <p class="empty" id="blog-posts-empty" hidden>No social posts yet.</p>
           </div>
         </section>
       </div>
@@ -1439,7 +1439,7 @@
               <td>${escapeHtml((p.createdAt || "").slice(0, 10))}</td>
               <td>
                 <div class="row-actions">
-                  <a class="tiny ok" href="blog-post.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">View</a>
+                  <a class="tiny ok" href="social-post.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">View</a>
                   <button class="tiny danger" type="button" data-del-blog="${p.id}">Delete</button>
                 </div>
               </td>
@@ -1773,7 +1773,7 @@
           msg.classList.remove("ok");
           return;
         }
-        msg.textContent = "Article published.";
+        msg.textContent = "Social post published.";
         msg.classList.add("ok");
         e.target.reset();
         render();

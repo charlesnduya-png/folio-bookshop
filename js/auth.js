@@ -2528,6 +2528,10 @@
         .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
     },
 
+    getSocialPosts() {
+      return this.getBlogPosts();
+    },
+
     saveBlogPosts(items) {
       write(BLOG_KEY, items);
     },
@@ -2536,15 +2540,19 @@
       return this.getBlogPosts().find((p) => p.id === id) || null;
     },
 
+    getSocialPostById(id) {
+      return this.getBlogPostById(id);
+    },
+
     createBlogPost({ authorId, authorName, title, excerpt, body, coverImage }) {
       const author = this.getUsers().find((u) => u.id === authorId);
       if (!author || author.role !== "admin") {
-        return { ok: false, error: "Only admins can publish blog posts." };
+        return { ok: false, error: "Only admins can publish social posts." };
       }
       const cleanTitle = String(title || "").trim();
       const cleanBody = String(body || "").trim();
       if (!cleanTitle || !cleanBody) {
-        return { ok: false, error: "Add a title and article body." };
+        return { ok: false, error: "Add a title and post body." };
       }
       const post = {
         id: "blog_" + Date.now(),
@@ -2553,7 +2561,7 @@
         body: cleanBody,
         coverImage: String(coverImage || "").trim(),
         authorId,
-        authorName: authorName || author.name || "Folio Admin",
+        authorName: authorName || author.name || "Folio",
         status: "published",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -2564,10 +2572,14 @@
       return { ok: true, post };
     },
 
+    createSocialPost(payload) {
+      return this.createBlogPost(payload);
+    },
+
     deleteBlogPost(postId, adminId) {
       const admin = this.getUsers().find((u) => u.id === adminId);
       if (!admin || admin.role !== "admin") {
-        return { ok: false, error: "Only admins can delete blog posts." };
+        return { ok: false, error: "Only admins can delete social posts." };
       }
       const items = this.getBlogPosts();
       if (!items.some((p) => p.id === postId)) {
@@ -2575,6 +2587,10 @@
       }
       this.saveBlogPosts(items.filter((p) => p.id !== postId));
       return { ok: true };
+    },
+
+    deleteSocialPost(postId, adminId) {
+      return this.deleteBlogPost(postId, adminId);
     },
 
     isInstructorApproved(user) {

@@ -2,86 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Article — Folio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css" />
+  <title>Redirecting to Social — Folio</title>
+  <script>
+    const id = new URLSearchParams(window.location.search).get("id") || "";
+    window.location.replace(id ? "social-post.html?id=" + encodeURIComponent(id) : "social.html");
+  </script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="index.html" aria-label="Folio home">
-        <img src="assets/logo.png" alt="" width="36" height="36" />
-        <strong>Fol<span>io</span></strong>
-      </a>
-      <div class="topbar-actions">
-        <label class="currency-picker">
-          <span class="visually-hidden">Currency</span>
-          <select id="currency-select" aria-label="Display currency"></select>
-        </label>
-        <a class="btn btn-light" href="blog.html">All articles</a>
-        <a class="btn btn-dark" href="account.html">Account</a>
-      </div>
-    </div>
-  </header>
-
-  <main class="shell">
-    <p class="empty" id="post-missing" hidden>
-      Article not found. <a href="blog.html">Back to blog</a>
-    </p>
-    <article class="blog-article" id="post-article" hidden>
-      <a class="course-back" href="blog.html">← All articles</a>
-      <p class="school-kicker" id="post-meta"></p>
-      <h1 class="page-title" id="post-title"></h1>
-      <div class="blog-article-cover" id="post-cover" hidden></div>
-      <div class="blog-article-body" id="post-body"></div>
-    </article>
-  </main>
-
-  <script src="js/auth.js?v=17"></script>
-  <script>
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;");
-    }
-
-    function formatBody(text) {
-      return escapeHtml(text)
-        .split(/\n{2,}/)
-        .map((para) => `<p>${para.replaceAll("\n", "<br />")}</p>`)
-        .join("");
-    }
-
-    const id = new URLSearchParams(window.location.search).get("id") || "";
-    const post = FolioAuth.getBlogPostById(id);
-    const missing = document.getElementById("post-missing");
-    const article = document.getElementById("post-article");
-
-    if (!post || post.status !== "published") {
-      missing.hidden = false;
-      article.hidden = true;
-      document.title = "Article not found — Folio";
-    } else {
-      missing.hidden = true;
-      article.hidden = false;
-      document.title = `${post.title} — Folio`;
-      document.getElementById("post-meta").textContent =
-        `${(post.createdAt || "").slice(0, 10)} · ${post.authorName || "Folio Admin"}`;
-      document.getElementById("post-title").textContent = post.title;
-      document.getElementById("post-body").innerHTML = formatBody(post.body || "");
-      const cover = document.getElementById("post-cover");
-      if (post.coverImage) {
-        cover.hidden = false;
-        cover.style.backgroundImage = `url("${post.coverImage}")`;
-      }
-    }
-
-    FolioAuth.mountCurrencySelect(document.getElementById("currency-select"));
-  </script>
+  <p>This post moved to <a href="social.html">Social</a>.</p>
 </body>
 </html>
