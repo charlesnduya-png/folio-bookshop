@@ -13,6 +13,7 @@
   const ENROLLMENTS_KEY = "folio_enrollments";
   const BLOG_KEY = "folio_blog_posts";
   const FOLLOWS_KEY = "folio_follows";
+  const RATE_LIMIT_KEY = "folio_rate_limits";
   const DISPLAY_CURRENCY_KEY = "folio_display_currency";
   const DEFAULT_SETTINGS = {
     storeName: "Folio",
@@ -29,6 +30,19 @@
   const VIDEO_DB_NAME = "folio_course_videos";
   const VIDEO_STORE = "blobs";
   const MAX_VIDEO_BYTES = 80 * 1024 * 1024; // 80MB demo limit
+
+  /** Sliding-window rate limits: action -> { limit, windowMs } */
+  const RATE_LIMIT_RULES = {
+    login: { limit: 5, windowMs: 15 * 60 * 1000 },
+    register: { limit: 5, windowMs: 60 * 60 * 1000 },
+    social_post: { limit: 12, windowMs: 60 * 60 * 1000 },
+    social_comment: { limit: 40, windowMs: 60 * 60 * 1000 },
+    follow: { limit: 60, windowMs: 60 * 60 * 1000 },
+    profile_image: { limit: 10, windowMs: 60 * 60 * 1000 },
+  };
+
+  const memoryCache = new Map();
+  let cacheEpoch = 0;
 
   function openVideoDb() {
     return new Promise((resolve, reject) => {
@@ -104,6 +118,113 @@
 
   function write(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+    if (
+      key === USERS_KEY ||
+      key === BLOG_KEY ||
+      key === FOLLOWS_KEY ||
+      key === SESSION_KEY ||
+      key === COURSES_KEY ||
+      key === ENROLLMENTS_KEY ||
+      key === LISTINGS_KEY ||
+      key === ORDERS_KEY ||
+      key === SETTINGS_KEY
+    ) {
+      invalidateCache();
+    }
+  }
+
+  function invalidateCache() {
+    cacheEpoch += 1;
+    memoryCache.clear();
+  }
+
+  function cacheGet(key) {
+    const hit = memoryCache.get(key);
+    if (!hit) return null;
+    if (hit.epoch !== cacheEpoch || hit.expiresAt <= Date.now()) {
+      memoryCache.delete(key);
+      return null;
+    }
+    return hit.value;
+  }
+
+  function cacheSet(key, value, ttlMs) {
+    memoryCache.set(key, {
+      value,
+      epoch: cacheEpoch,
+      expiresAt: Date.now() + Math.max(250, Number(ttlMs) || 5000),
+    });
+    return value;
+  }
+
+  function getRateBuckets() {
+    const raw = read(RATE_LIMIT_KEY, {});
+    return raw && typeof raw === "object" ? raw : {};
+  }
+
+  function saveRateBuckets(buckets) {
+    localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(buckets));
+  }
+
+  function pruneTimestamps(list, windowMs, now) {
+    return (Array.isArray(list) ? list : []).filter((ts) => now - ts < windowMs);
+  }
+
+  function checkRateLimit(action, subject) {
+    const rule = RATE_LIMIT_RULES[action];
+    if (!rule) return { ok: true, remaining: Infinity };
+    const now = Date.now();
+    const key = action + "::" + String(subject || "anon");
+    const buckets = getRateBuckets();
+    const stamps = pruneTimestamps(buckets[key], rule.windowMs, now);
+    if (stamps.length >= rule.limit) {
+      const retryAfterMs = Math.max(0, rule.windowMs - (now - stamps[0]));
+      const mins = Math.ceil(retryAfterMs / 60000);
+      return {
+        ok: false,
+        remaining: 0,
+        retryAfterMs,
+        error:
+          action === "login"
+            ? `Too many sign-in attempts. Try again in about ${mins} minute${mins === 1 ? "" : "s"}.`
+            : `Rate limit reached. Try again in about ${mins} minute${mins === 1 ? "" : "s"}.`,
+      };
+    }
+    return {
+      ok: true,
+      remaining: rule.limit - stamps.length,
+      retryAfterMs: 0,
+    };
+  }
+
+  function hitRateLimit(action, subject) {
+    const rule = RATE_LIMIT_RULES[action];
+    if (!rule) return { ok: true, remaining: Infinity };
+    const now = Date.now();
+    const key = action + "::" + String(subject || "anon");
+    const buckets = getRateBuckets();
+    const stamps = pruneTimestamps(buckets[key], rule.windowMs, now);
+    stamps.push(now);
+    buckets[key] = stamps;
+    // Drop stale keys to keep storage small
+    Object.keys(buckets).forEach((k) => {
+      const actionName = k.split("::")[0];
+      const r = RATE_LIMIT_RULES[actionName];
+      buckets[k] = pruneTimestamps(buckets[k], r ? r.windowMs : 60 * 60 * 1000, now);
+      if (!buckets[k].length) delete buckets[k];
+    });
+    saveRateBuckets(buckets);
+    return {
+      ok: stamps.length <= rule.limit,
+      remaining: Math.max(0, rule.limit - stamps.length),
+    };
+  }
+
+  function consumeRateLimit(action, subject) {
+    const gate = checkRateLimit(action, subject);
+    if (!gate.ok) return gate;
+    hitRateLimit(action, subject);
+    return { ok: true, remaining: Math.max(0, (gate.remaining || 1) - 1) };
   }
 
   function normalizeUserRecord(u) {
@@ -415,7 +536,21 @@
 
   window.FolioAuth = {
     getUsers() {
-      return read(USERS_KEY, []);
+      const cached = cacheGet("users");
+      if (cached) return cached;
+      return cacheSet("users", read(USERS_KEY, []), 4000);
+    },
+
+    invalidateCache() {
+      invalidateCache();
+    },
+
+    checkRateLimit(action, subject) {
+      return checkRateLimit(action, subject);
+    },
+
+    getRateLimitRules() {
+      return { ...RATE_LIMIT_RULES };
     },
 
     getSession() {
@@ -469,6 +604,8 @@
       if (!name || !cleanEmail || !password) {
         return { ok: false, error: "Please fill in all fields." };
       }
+      const rate = consumeRateLimit("register", "browser");
+      if (!rate.ok) return { ok: false, error: rate.error };
       if (users.some((u) => u.email === cleanEmail)) {
         return { ok: false, error: "That email is already registered." };
       }
@@ -654,6 +791,8 @@
     async saveProfileImage(userId, file) {
       const user = this.getUsers().find((u) => u.id === userId);
       if (!user) return { ok: false, error: "Account not found." };
+      const rate = consumeRateLimit("profile_image", userId);
+      if (!rate.ok) return { ok: false, error: rate.error };
       if (!file) return { ok: false, error: "Choose a profile image." };
       if (!String(file.type || "").startsWith("image/")) {
         return { ok: false, error: "Upload an image file (JPG, PNG, or WebP)." };
@@ -705,16 +844,27 @@
 
     login(email, password) {
       const cleanEmail = String(email || "").trim().toLowerCase();
+      const gate = checkRateLimit("login", cleanEmail || "anon");
+      if (!gate.ok) return { ok: false, error: gate.error };
+
       const user = this.getUsers().find(
         (u) => u.email === cleanEmail && u.password === String(password || "")
       );
-      if (!user) return { ok: false, error: "Invalid email or password." };
+      if (!user) {
+        hitRateLimit("login", cleanEmail || "anon");
+        return { ok: false, error: "Invalid email or password." };
+      }
       if (this.isAccountSuspended(user)) {
+        hitRateLimit("login", cleanEmail || "anon");
         return {
           ok: false,
           error: "This account is suspended. Contact Folio support.",
         };
       }
+      // Clear failed attempts after a successful sign-in
+      const buckets = getRateBuckets();
+      delete buckets["login::" + cleanEmail];
+      saveRateBuckets(buckets);
       write(SESSION_KEY, { userId: user.id });
       return { ok: true, user };
     },
@@ -2651,6 +2801,11 @@
     },
 
     getVisibleSocialPosts({ followingOnly = false, viewerId = null } = {}) {
+      const cacheKey =
+        "social_feed:" + (followingOnly ? "1" : "0") + ":" + (viewerId || "anon");
+      const cached = cacheGet(cacheKey);
+      if (cached) return cached;
+
       const usersById = new Map(this.getUsers().map((u) => [u.id, u]));
       let posts = this.getSocialPosts().filter((p) => {
         if (p.status !== "published") return false;
@@ -2662,7 +2817,7 @@
         const following = new Set(this.getFollowingIds(viewerId));
         posts = posts.filter((p) => p.authorId === viewerId || following.has(p.authorId));
       }
-      return posts.map((p) => {
+      const enriched = posts.map((p) => {
         const author = usersById.get(p.authorId);
         const comments = (Array.isArray(p.comments) ? p.comments : [])
           .map((c) => {
@@ -2686,6 +2841,7 @@
           commentCount: comments.length,
         };
       });
+      return cacheSet(cacheKey, enriched, 3000);
     },
 
     async prepareSocialImage(file) {
@@ -2735,6 +2891,8 @@
             : "Sign in as a student or tutor to post.",
         };
       }
+      const rate = consumeRateLimit("social_post", authorId);
+      if (!rate.ok) return { ok: false, error: rate.error };
       const cleanBody = String(body || "").trim();
       const image = String(coverImage || "").trim();
       if (!cleanBody && !image) {
@@ -2792,6 +2950,8 @@
             : "Sign in to comment.",
         };
       }
+      const rate = consumeRateLimit("social_comment", authorId);
+      if (!rate.ok) return { ok: false, error: rate.error };
       const cleanBody = String(body || "").trim();
       if (!cleanBody) return { ok: false, error: "Write a comment first." };
       if (cleanBody.length > 1000) {
@@ -2914,6 +3074,8 @@
       if (this.isFollowing(followerId, followingId)) {
         return { ok: true, following: true };
       }
+      const rate = consumeRateLimit("follow", followerId);
+      if (!rate.ok) return { ok: false, error: rate.error };
       const items = this.getFollows();
       items.push({
         id: "fol_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
