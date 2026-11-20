@@ -1,0 +1,21 @@
+# Folio — https://folio-bookshop.onrender.com
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /courses.html
+Allow: /course-catalog.html
+Allow: /course.html
+Allow: /social.html
+Allow: /social-post.html
+Allow: /privacy.html
+Allow: /terms.html
+Allow: /cookies.html
+Allow: /login.html
+
+Disallow: /admin.html
+Disallow: /account.html
+Disallow: /tutor-dashboard.html
+Disallow: /blog.html
+Disallow: /blog-post.html
+
+Sitemap: https://folio-bookshop.onrender.com/sitemap.xml

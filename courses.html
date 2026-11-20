@@ -4,10 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Courses — Folio</title>
+  <meta name="description" content="Browse Folio courses from approved tutors. Learn at your pace with lessons, chapter videos, and class tests." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://folio-bookshop.onrender.com/courses.html" />
+  <link rel="icon" href="assets/logo.png" />
+  <meta property="og:title" content="Courses — Folio" />
+  <meta property="og:description" content="Browse Folio courses from approved tutors." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://folio-bookshop.onrender.com/courses.html" />
+  <meta property="og:image" content="https://folio-bookshop.onrender.com/assets/path-courses.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=27" />
+  <link rel="stylesheet" href="css/app.css?v=30" />
 </head>
 <body>
   <header class="topbar">
@@ -76,8 +85,10 @@
   </main>
 
   <script src="js/auth.js?v=32"></script>
+  <script src="js/seo.js?v=1"></script>
   <script>
     FolioAuth.mountCurrencySelect(document.getElementById("currency-select"));
+    if (window.FolioSEO) FolioSEO.applyCourses();
   </script>
 </body>
 </html>

@@ -4,10 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin — Folio</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Folio admin dashboard." />
+  <link rel="icon" href="assets/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=28" />
+  <link rel="stylesheet" href="css/app.css?v=30" />
 </head>
 <body class="admin-body">
   <div class="admin-frame">
@@ -29,6 +32,7 @@
         <button type="button" data-panel="courses">Courses</button>
         <button type="button" data-panel="blog">Social</button>
         <button type="button" data-panel="accounts">Accounts</button>
+        <button type="button" data-panel="seo">SEO</button>
         <button type="button" data-panel="settings">Settings</button>
       </nav>
 
@@ -349,6 +353,44 @@
           </div>
         </section>
 
+        <!-- SEO -->
+        <section class="admin-panel" id="panel-seo" hidden>
+          <div class="admin-card">
+            <h2>Search engine optimization</h2>
+            <p class="hint">Control the public site title, description, and social preview image used across Folio pages.</p>
+            <p class="form-msg" id="seo-msg"></p>
+            <form id="seo-form">
+              <div class="field">
+                <label for="seo-title">Site title</label>
+                <input id="seo-title" type="text" maxlength="70" required placeholder="Folio — Books for every chapter" />
+              </div>
+              <div class="field">
+                <label for="seo-description">Meta description</label>
+                <textarea id="seo-description" maxlength="170" required placeholder="Short summary for Google and social previews…" style="min-height:100px"></textarea>
+                <p class="hint" style="margin-top:6px">Aim for about 120–160 characters.</p>
+              </div>
+              <div class="field">
+                <label for="seo-keywords">Keywords</label>
+                <input id="seo-keywords" type="text" maxlength="200" placeholder="bookstore, courses, tutors…" />
+              </div>
+              <div class="field">
+                <label for="seo-og-image">Social preview image URL</label>
+                <input id="seo-og-image" type="text" placeholder="/assets/hero-books.jpg" />
+              </div>
+              <button class="btn btn-leaf" type="submit">Save SEO settings</button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h2>Crawl checklist</h2>
+            <ul class="hint" style="margin:0;padding-left:1.2rem;line-height:1.7">
+              <li><a href="robots.txt" target="_blank" rel="noopener">robots.txt</a> — blocks admin/account from indexing</li>
+              <li><a href="sitemap.xml" target="_blank" rel="noopener">sitemap.xml</a> — lists public Folio URLs</li>
+              <li>Private pages (admin, account, tutor dashboard) send <code>noindex</code></li>
+              <li>Public pages include Open Graph + JSON-LD where useful</li>
+            </ul>
+          </div>
+        </section>
+
         <!-- Tutors -->
         <section class="admin-panel" id="panel-tutors" hidden>
           <div class="admin-card">
@@ -610,6 +652,7 @@
         courses: document.getElementById("panel-courses"),
         blog: document.getElementById("panel-blog"),
         accounts: document.getElementById("panel-accounts"),
+        seo: document.getElementById("panel-seo"),
         settings: document.getElementById("panel-settings"),
       };
 
@@ -622,6 +665,7 @@
         });
         render();
         if (name === "settings") loadSettingsForm();
+        if (name === "seo") loadSeoForm();
       }
 
       navButtons.forEach((btn) => {
@@ -1785,6 +1829,17 @@
         document.getElementById("set-tutor-fee").value = s.tutorAnnualFee ?? 99;
       }
 
+      function loadSeoForm() {
+        const s = FolioAuth.getSettings();
+        document.getElementById("seo-title").value = s.seoTitle || "Folio — Books for every chapter";
+        document.getElementById("seo-description").value =
+          s.seoDescription ||
+          "Folio is a bookshop and online school — buy and sell books, join courses, teach as a tutor, and share on Social.";
+        document.getElementById("seo-keywords").value =
+          s.seoKeywords || "Folio, bookstore, online courses, tutors, buy books, sell books, learning, Social";
+        document.getElementById("seo-og-image").value = s.seoOgImage || "/assets/hero-books.jpg";
+      }
+
       document.getElementById("settings-form").addEventListener("submit", (e) => {
         e.preventDefault();
         const currency = document.getElementById("set-currency").value;
@@ -1803,6 +1858,19 @@
         msg.textContent = "Settings saved.";
         msg.classList.add("ok");
         render();
+      });
+
+      document.getElementById("seo-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        FolioAuth.saveSettings({
+          seoTitle: document.getElementById("seo-title").value.trim(),
+          seoDescription: document.getElementById("seo-description").value.trim(),
+          seoKeywords: document.getElementById("seo-keywords").value.trim(),
+          seoOgImage: document.getElementById("seo-og-image").value.trim() || "/assets/hero-books.jpg",
+        });
+        const msg = document.getElementById("seo-msg");
+        msg.textContent = "SEO settings saved. Public pages pick these up on the next load.";
+        msg.classList.add("ok");
       });
 
       document.getElementById("tutor-search").addEventListener("input", () => render());

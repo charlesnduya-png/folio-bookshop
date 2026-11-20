@@ -24,6 +24,11 @@
     autoApproveBooks: "no",
     minWithdrawal: 10,
     tutorAnnualFee: 99,
+    seoTitle: "Folio — Books for every chapter",
+    seoDescription:
+      "Folio is a bookshop and online school — buy and sell books, join courses, teach as a tutor, and share on Social.",
+    seoKeywords: "Folio, bookstore, online courses, tutors, buy books, sell books, learning, Social",
+    seoOgImage: "/assets/hero-books.jpg",
   };
   const PLATFORM_FEE_RATE = 0.12;
   const TUTOR_FEE_RATE = 0.25;

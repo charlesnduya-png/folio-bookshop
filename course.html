@@ -4,10 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Course — Folio</title>
+  <meta name="description" content="Learn with Folio courses — lessons, chapter videos, and class tests from approved tutors." />
+  <meta name="robots" content="index, follow" />
+  <link rel="icon" href="assets/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=27" />
+  <link rel="stylesheet" href="css/app.css?v=30" />
 </head>
 <body>
   <header class="topbar">
@@ -99,6 +102,7 @@
   </main>
 
   <script src="js/auth.js?v=32"></script>
+  <script src="js/seo.js?v=1"></script>
   <script>
     function money(n) {
       return FolioAuth.formatMoney(n);
@@ -269,12 +273,38 @@
         missing.hidden = false;
         detail.hidden = true;
         document.title = "Course not found — Folio";
+        if (window.FolioSEO) {
+          FolioSEO.applyPage({
+            title: "Course not found — Folio",
+            description: "This Folio course could not be found.",
+            path: "course.html",
+            noindex: true,
+          });
+        }
         return;
       }
 
       missing.hidden = true;
       detail.hidden = false;
       document.title = `${course.title} — Folio`;
+      if (window.FolioSEO) {
+        FolioSEO.applyPage({
+          title: `${course.title} — Folio`,
+          description: String(course.description || "").trim().slice(0, 160) || `Learn ${course.title} on Folio.`,
+          path: "course.html?id=" + encodeURIComponent(course.id),
+          canonical: "course.html?id=" + encodeURIComponent(course.id),
+          image: course.coverImage || "/assets/path-courses.jpg",
+          type: "article",
+          jsonLd: {
+            "@context": "https://schema.org",
+            "@type": "Course",
+            name: course.title,
+            description: course.description || "",
+            provider: { "@type": "Organization", name: "Folio" },
+            url: FolioSEO.absoluteUrl("course.html?id=" + encodeURIComponent(course.id)),
+          },
+        });
+      }
 
       document.getElementById("course-title").textContent = course.title;
       document.getElementById("course-desc").textContent =
