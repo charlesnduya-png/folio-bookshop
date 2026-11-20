@@ -2828,7 +2828,6 @@ body.admin-body th:last-child {
 
 .li-card-body p {
   margin: 0;
-  white-space: pre-wrap;
 }
 
 .li-card-media img {
