@@ -116,7 +116,7 @@
           <div class="panel" id="sell">
             <h2>My books — list for sale</h2>
             <p class="hint" style="margin-top:0;margin-bottom:16px">
-              Upload a cover photo and listing details. New books start as <strong>pending</strong> until admin review, then appear in the shop stacks.
+              Upload a cover photo and listing details. New books go <strong>live</strong> in the shop stacks right away.
             </p>
             <form id="sell-form">
               <p class="form-msg" id="sell-msg"></p>
@@ -404,7 +404,7 @@
             <div class="help-list">
               <div class="help-item">
                 <strong>How selling works</strong>
-                <p>Upload a book under My books. It stays pending until an admin approves it. When it sells, mark it sold in My listings to track earnings. Instructors can offer courses after special signup and approval.</p>
+                <p>Upload a book under My books and it goes live in the shop. When it sells, mark it sold in My listings to track earnings. Instructors can offer courses after special signup and approval.</p>
               </div>
               <div class="help-item">
                 <strong>Payments &amp; payouts</strong>
@@ -425,7 +425,7 @@
     </div>
   </main>
 
-  <script src="js/auth.js?v=34"></script>
+  <script src="js/auth.js?v=35"></script>
   <script>
     const user = FolioAuth.requireAuth(
       "login.html?next=" + encodeURIComponent("account.html" + (location.hash || ""))

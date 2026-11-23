@@ -21,7 +21,7 @@
     feePercent: 12,
     tutorFeePercent: 25,
     currency: "USD",
-    autoApproveBooks: "no",
+    autoApproveBooks: "yes",
     minWithdrawal: 10,
     tutorAnnualFee: 99,
     seoTitle: "Folio — Books for every chapter",
@@ -426,19 +426,49 @@
     }
     {
       const settings = read(SETTINGS_KEY, DEFAULT_SETTINGS);
-      if (settings.tutorAnnualFee == null || settings.tutorFeePercent == null) {
-        write(SETTINGS_KEY, {
-          ...settings,
-          tutorAnnualFee:
-            settings.tutorAnnualFee == null
-              ? DEFAULT_SETTINGS.tutorAnnualFee
-              : settings.tutorAnnualFee,
-          tutorFeePercent:
-            settings.tutorFeePercent == null
-              ? DEFAULT_SETTINGS.tutorFeePercent
-              : settings.tutorFeePercent,
-        });
-      }
+      const nextSettings = {
+        ...settings,
+        tutorAnnualFee:
+          settings.tutorAnnualFee == null
+            ? DEFAULT_SETTINGS.tutorAnnualFee
+            : settings.tutorAnnualFee,
+        tutorFeePercent:
+          settings.tutorFeePercent == null
+            ? DEFAULT_SETTINGS.tutorFeePercent
+            : settings.tutorFeePercent,
+        // Listed books go live in the shop without waiting on admin review.
+        autoApproveBooks: "yes",
+      };
+      write(SETTINGS_KEY, nextSettings);
+
+      const listings = read(LISTINGS_KEY, []) || [];
+      let listingsChanged = false;
+      const promoted = listings.map((item) => {
+        if (item && item.status === "pending") {
+          listingsChanged = true;
+          return { ...item, status: "live", approvedAt: item.approvedAt || new Date().toISOString() };
+        }
+        return item;
+      });
+      if (listingsChanged) write(LISTINGS_KEY, promoted);
+
+      const users = read(USERS_KEY, []) || [];
+      let usersChanged = false;
+      const sellerIds = new Set(
+        promoted.filter((l) => l && l.status === "live" && l.sellerId).map((l) => l.sellerId)
+      );
+      const nextUsers = users.map((u) => {
+        if (
+          sellerIds.has(u.id) &&
+          u.role === "customer" &&
+          (u.sellerStatus === "pending" || !u.sellerStatus || u.sellerStatus === "none")
+        ) {
+          usersChanged = true;
+          return { ...u, sellerStatus: "approved" };
+        }
+        return u;
+      });
+      if (usersChanged) write(USERS_KEY, nextUsers);
     }
     {
       const seedCourses = [
@@ -1007,6 +1037,7 @@
         return { ok: false, error: "Upload a cover photo of the book." };
       }
 
+      const autoLive = this.getSettings().autoApproveBooks === "yes";
       const listing = this.saveListing({
         id: "list_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
         sellerId: seller.id,
@@ -1018,20 +1049,25 @@
         condition: cleanCondition,
         notes: cleanNotes,
         coverImage: cover,
-        status: "pending",
+        status: autoLive ? "live" : "pending",
+        approvedAt: autoLive ? new Date().toISOString() : null,
         createdAt: new Date().toISOString(),
       });
 
       this.addNotification({
-        title: "Book listing submitted",
-        body: `“${cleanTitle}” was uploaded and is waiting for admin review.`,
+        title: autoLive ? "Book is live" : "Book listing submitted",
+        body: autoLive
+          ? `“${cleanTitle}” is live in the shop stacks.`
+          : `“${cleanTitle}” was uploaded and is waiting for admin review.`,
         userId: seller.id,
         audience: "user",
         fromUserName: "Folio",
       });
       this.addNotification({
-        title: "New book listing",
-        body: `${seller.name} uploaded “${cleanTitle}” for sale.`,
+        title: autoLive ? "Book went live" : "New book listing",
+        body: autoLive
+          ? `${seller.name} listed “${cleanTitle}” — now live in the shop.`
+          : `${seller.name} uploaded “${cleanTitle}” for sale.`,
         audience: "admin",
       });
 
