@@ -61,10 +61,10 @@
 
     .cert-sheet {
       position: relative;
-      aspect-ratio: 1.414 / 1;
       width: 100%;
+      min-height: min(72vw, 720px);
       margin: 0 auto;
-      padding: clamp(28px, 4.2vw, 52px);
+      padding: clamp(34px, 4.5vw, 56px) clamp(28px, 4vw, 52px) clamp(28px, 3.5vw, 40px);
       color: var(--cert-ink);
       background:
         linear-gradient(135deg, rgba(176, 141, 60, 0.07), transparent 28%),
@@ -201,7 +201,7 @@
     .cert-title {
       margin: 0 0 4px;
       font-family: "Cormorant Garamond", "Times New Roman", serif;
-      font-size: clamp(2.2rem, 5.2vw, 3.6rem);
+      font-size: clamp(2rem, 4.6vw, 3.2rem);
       font-weight: 600;
       line-height: 1.05;
       letter-spacing: 0.01em;
@@ -209,11 +209,11 @@
     }
 
     .cert-subtitle {
-      margin: 0 auto 18px;
+      margin: 0 auto 12px;
       max-width: 34rem;
       font-family: "Cormorant Garamond", serif;
       font-style: italic;
-      font-size: clamp(1.05rem, 2vw, 1.3rem);
+      font-size: clamp(1rem, 1.8vw, 1.2rem);
       color: var(--cert-soft);
     }
 
@@ -234,7 +234,7 @@
     .cert-name {
       margin: 4px 0 2px;
       font-family: "Gloock", "Times New Roman", serif;
-      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-size: clamp(1.85rem, 4.4vw, 2.85rem);
       font-weight: 400;
       line-height: 1.1;
       color: var(--cert-leaf);
@@ -380,8 +380,7 @@
 
     @media (max-width: 760px) {
       .cert-sheet {
-        aspect-ratio: auto;
-        min-height: 640px;
+        min-height: 0;
       }
 
       .cert-seal-row {
@@ -403,7 +402,7 @@
     @media print {
       @page {
         size: landscape;
-        margin: 10mm;
+        margin: 8mm;
       }
 
       .topbar,
@@ -425,9 +424,7 @@
         box-shadow: none;
         border-radius: 0;
         width: 100%;
-        height: auto;
-        min-height: 0;
-        aspect-ratio: 1.414 / 1;
+        min-height: 180mm;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
