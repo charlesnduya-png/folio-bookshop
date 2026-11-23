@@ -15,6 +15,7 @@ Allow: /login.html
 Disallow: /admin.html
 Disallow: /account.html
 Disallow: /tutor-dashboard.html
+Disallow: /certificate.html
 Disallow: /blog.html
 Disallow: /blog-post.html
 

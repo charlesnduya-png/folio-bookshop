@@ -1851,6 +1851,23 @@ th {
   margin-right: 8px;
 }
 
+.cert-cover {
+  background:
+    linear-gradient(145deg, rgba(31, 107, 74, 0.18), rgba(41, 171, 135, 0.35)),
+    #e8f3ec;
+  position: relative;
+}
+
+.cert-cover::after {
+  content: "★";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #1f6b4a;
+  font-size: 1.4rem;
+}
+
 .book-cover-upload {
   display: grid;
   gap: 10px;

@@ -2634,22 +2634,51 @@
       return enrollment;
     },
 
+    makeCertificateCode(enrollment) {
+      const stamp = String(Date.now()).slice(-8);
+      const seed = String(enrollment.id || "folio")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .slice(-6)
+        .toUpperCase();
+      return `FOLIO-${seed}-${stamp}`;
+    },
+
     requestCertificate(enrollmentId, userId) {
       let enrollment = this.getEnrollments().find((e) => e.id === enrollmentId && e.userId === userId);
       if (!enrollment) return { ok: false, error: "Enrollment not found." };
       enrollment = this.refreshEnrollmentProgress(enrollment);
       if (enrollment.status !== "completed") {
-        return { ok: false, error: "Finish the learning duration before requesting a certificate." };
+        return { ok: false, error: "Finish the course before getting your certificate." };
       }
-      if (enrollment.certStatus === "requested" || enrollment.certStatus === "issued") {
-        return { ok: false, error: "Certificate already requested or issued." };
+      if (enrollment.certStatus === "issued" && enrollment.certificateCode) {
+        return { ok: true, enrollment, alreadyIssued: true };
       }
+      const issuedAt = new Date().toISOString();
       const next = {
         ...enrollment,
-        certStatus: "requested",
-        certRequestedAt: new Date().toISOString(),
+        status: "completed",
+        certStatus: "issued",
+        certRequestedAt: enrollment.certRequestedAt || issuedAt,
+        certIssuedAt: issuedAt,
+        certificateCode: enrollment.certificateCode || this.makeCertificateCode(enrollment),
+        certificateStudentName:
+          enrollment.userName ||
+          (this.getUsers().find((u) => u.id === userId) || {}).name ||
+          "Student",
       };
       this.saveEnrollments(this.getEnrollments().map((e) => (e.id === enrollmentId ? next : e)));
+      this.addNotification({
+        title: "Certificate ready",
+        body: `Your certificate for “${next.courseTitle}” is ready in My certificates.`,
+        userId,
+        audience: "user",
+        fromUserName: "Folio",
+      });
+      this.addNotification({
+        title: "Certificate issued",
+        body: `${next.certificateStudentName} earned a certificate for “${next.courseTitle}”.`,
+        audience: "admin",
+      });
       return { ok: true, enrollment: next };
     },
 
@@ -2660,12 +2689,55 @@
     issueCertificate(enrollmentId) {
       const enrollment = this.getEnrollments().find((e) => e.id === enrollmentId);
       if (!enrollment) return { ok: false, error: "Enrollment not found." };
-      this.updateEnrollment(enrollmentId, {
+      const student = this.getUsers().find((u) => u.id === enrollment.userId);
+      const issuedAt = new Date().toISOString();
+      const next = {
         certStatus: "issued",
-        certIssuedAt: new Date().toISOString(),
+        certIssuedAt: issuedAt,
+        certRequestedAt: enrollment.certRequestedAt || issuedAt,
         status: "completed",
-      });
-      return { ok: true };
+        certificateCode: enrollment.certificateCode || this.makeCertificateCode(enrollment),
+        certificateStudentName:
+          enrollment.certificateStudentName || enrollment.userName || (student && student.name) || "Student",
+      };
+      this.updateEnrollment(enrollmentId, next);
+      if (enrollment.userId) {
+        this.addNotification({
+          title: "Certificate ready",
+          body: `Your certificate for “${enrollment.courseTitle}” is ready in My certificates.`,
+          userId: enrollment.userId,
+          audience: "user",
+          fromUserName: "Folio",
+        });
+      }
+      return { ok: true, enrollment: { ...enrollment, ...next } };
+    },
+
+    getCertificatesByUser(userId) {
+      return this.getEnrollmentsByUser(userId)
+        .map((e) => this.refreshEnrollmentProgress(e))
+        .filter((e) => e.certStatus === "issued")
+        .map((e) => {
+          const course = this.getCourseById(e.courseId);
+          return {
+            id: e.id,
+            enrollmentId: e.id,
+            certificateCode: e.certificateCode || this.makeCertificateCode(e),
+            studentName: e.certificateStudentName || e.userName || "Student",
+            courseId: e.courseId,
+            courseTitle: e.courseTitle || (course && course.title) || "Course",
+            instructorName: e.instructorName || (course && course.instructorName) || "Folio tutor",
+            issuedAt: e.certIssuedAt || e.endAt || e.createdAt,
+            completedAt: e.endAt || e.certIssuedAt,
+            durationDays: e.durationDays || null,
+          };
+        })
+        .sort((a, b) => String(b.issuedAt || "").localeCompare(String(a.issuedAt || "")));
+    },
+
+    getCertificateById(enrollmentId, userId) {
+      const list = this.getCertificatesByUser(userId);
+      return list.find((c) => c.enrollmentId === enrollmentId) || null;
     },
 
     getChapterTest(course, chapterId) {

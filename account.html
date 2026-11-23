@@ -41,6 +41,7 @@
         <button type="button" data-panel="books">My books</button>
         <button type="button" data-panel="listings">My listings</button>
         <button type="button" data-panel="learning">My learning</button>
+        <button type="button" data-panel="certificates">My certificates</button>
         <button type="button" data-panel="notifications">Notifications <span id="notif-count" class="nav-count" hidden></span></button>
         <button type="button" data-panel="teach">Teach courses</button>
         <button type="button" data-panel="collection">My collection</button>
@@ -233,10 +234,23 @@
             <h2>My learning</h2>
             <p class="hint" style="margin-top:0;margin-bottom:16px">
               Paid enrollments only. Use Continue learning to reopen a course and resume where you left off.
+              When a course is completed, get your certificate here or under <strong>My certificates</strong>.
             </p>
             <p class="form-msg" id="learning-msg"></p>
             <div id="my-learning"></div>
             <p style="margin-top:16px"><a class="btn btn-leaf" href="course-catalog.html">Browse courses</a></p>
+          </div>
+        </section>
+
+        <!-- My certificates -->
+        <section class="account-panel" id="panel-certificates" hidden>
+          <div class="panel">
+            <h2>My certificates</h2>
+            <p class="hint" style="margin-top:0;margin-bottom:16px">
+              Certificates appear here after you finish a course and claim them. Open a certificate to view or print it as PDF.
+            </p>
+            <p class="form-msg" id="certificates-msg"></p>
+            <div id="my-certificates"></div>
           </div>
         </section>
 
@@ -411,7 +425,7 @@
     </div>
   </main>
 
-  <script src="js/auth.js?v=33"></script>
+  <script src="js/auth.js?v=34"></script>
   <script>
     const user = FolioAuth.requireAuth(
       "login.html?next=" + encodeURIComponent("account.html" + (location.hash || ""))
@@ -477,6 +491,7 @@
         books: document.getElementById("panel-books"),
         listings: document.getElementById("panel-listings"),
         learning: document.getElementById("panel-learning"),
+        certificates: document.getElementById("panel-certificates"),
         notifications: document.getElementById("panel-notifications"),
         teach: document.getElementById("panel-teach"),
         collection: document.getElementById("panel-collection"),
@@ -505,6 +520,7 @@
         if (name === "listings") renderListings();
         if (name === "books") renderBooksUploads();
         if (name === "learning") renderLearning();
+        if (name === "certificates") renderCertificates();
         if (name === "notifications") renderNotifications();
         if (name === "teach") renderTeach();
         if (name === "collection") renderCollection();
@@ -705,11 +721,9 @@
               e.courseId
             )}&resume=1">${resumeLabel}</a>`;
             if (e.certStatus === "issued") {
-              action += `<span class="badge badge-live">Certificate issued</span>`;
-            } else if (e.certStatus === "requested") {
-              action += `<span class="badge badge-pending">Certificate pending</span>`;
+              action += `<a class="tiny ok" href="certificate.html?id=${encodeURIComponent(e.id)}">View certificate</a>`;
             } else if (e.status === "completed") {
-              action += `<button class="tiny ok" type="button" data-cert="${e.id}">Request certificate</button>`;
+              action += `<button class="tiny ok" type="button" data-cert="${e.id}">Get certificate</button>`;
             } else {
               action += `<span class="badge badge-live">In progress</span>`;
             }
@@ -739,11 +753,44 @@
               msg.classList.remove("ok");
               return;
             }
-            msg.textContent = "Certificate requested.";
+            msg.textContent = "Certificate ready — open My certificates to view or print it.";
             msg.classList.add("ok");
             renderLearning();
+            renderCertificates();
+            updateNotifBadge();
           });
         });
+      }
+
+      function renderCertificates() {
+        const box = document.getElementById("my-certificates");
+        const msg = document.getElementById("certificates-msg");
+        if (msg) {
+          msg.textContent = "";
+          msg.classList.remove("ok");
+        }
+        const certs = FolioAuth.getCertificatesByUser(user.id);
+        if (!certs.length) {
+          box.innerHTML = `<p class="empty">No certificates yet. Finish a course under My learning, then click Get certificate.</p>`;
+          return;
+        }
+        box.innerHTML = certs
+          .map(
+            (c) => `
+            <article class="listing-card cert-card">
+              <div class="listing-cover cert-cover" aria-hidden="true"></div>
+              <div>
+                <h3>${escapeHtml(c.courseTitle)}</h3>
+                <p>Awarded to ${escapeHtml(c.studentName)}</p>
+                <p style="margin-top:6px">Issued ${(c.issuedAt || "").slice(0, 10)} · Code ${escapeHtml(c.certificateCode)}</p>
+                <p style="margin-top:6px">Instructor ${escapeHtml(c.instructorName)}</p>
+              </div>
+              <div class="row-actions">
+                <a class="tiny ok" href="certificate.html?id=${encodeURIComponent(c.enrollmentId)}">View / Print</a>
+              </div>
+            </article>`
+          )
+          .join("");
       }
 
       function renderNotifications() {

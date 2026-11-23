@@ -510,7 +510,8 @@
           </div>
 
           <div class="admin-card">
-            <h2>Certificate requests</h2>
+            <h2>Certificates</h2>
+            <p class="hint">Students can claim certificates after completing a course. Issued certificates appear here too.</p>
             <div class="table-wrap">
               <table>
                 <thead>
@@ -1434,8 +1435,12 @@
         } else {
           certsEmpty.hidden = true;
           certsBody.innerHTML = certs
-            .map(
-              (e) => `
+            .map((e) => {
+              const actions =
+                e.certStatus === "issued"
+                  ? `<span class="hint">${escapeHtml(e.certificateCode || "Issued")}</span>`
+                  : `<button class="tiny ok" type="button" data-issue-cert="${e.id}">Issue certificate</button>`;
+              return `
             <tr>
               <td>${escapeHtml(e.userName)}<br /><span style="color:var(--muted)">${escapeHtml(e.userEmail || "")}</span></td>
               <td>${escapeHtml(e.courseTitle)}</td>
@@ -1443,12 +1448,10 @@
               <td>${escapeHtml((e.endAt || "").slice(0, 10))}</td>
               <td>${badge(e.certStatus)}</td>
               <td>
-                <div class="row-actions">
-                  <button class="tiny ok" type="button" data-issue-cert="${e.id}">Issue certificate</button>
-                </div>
+                <div class="row-actions">${actions}</div>
               </td>
-            </tr>`
-            )
+            </tr>`;
+            })
             .join("");
         }
 

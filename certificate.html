@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certificate — Folio</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css?v=33" />
+  <style>
+    .cert-page {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 28px 20px 64px;
+    }
+    .cert-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .cert-sheet {
+      position: relative;
+      padding: 48px 42px;
+      border: 1px solid rgba(20, 32, 27, 0.16);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at top right, rgba(41, 171, 135, 0.12), transparent 40%),
+        linear-gradient(180deg, #ffffff, #f7faf8);
+      box-shadow: 0 18px 40px rgba(20, 32, 27, 0.08);
+      text-align: center;
+      overflow: hidden;
+    }
+    .cert-sheet::before {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border: 2px solid rgba(31, 107, 74, 0.28);
+      border-radius: 12px;
+      pointer-events: none;
+    }
+    .cert-kicker {
+      margin: 0 0 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #1f6b4a;
+    }
+    .cert-sheet h1 {
+      margin: 0 0 8px;
+      font-family: "Gloock", "Times New Roman", serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 400;
+      color: #14201b;
+    }
+    .cert-sheet .cert-lead {
+      margin: 0 auto 28px;
+      max-width: 36rem;
+      color: #5d6f66;
+    }
+    .cert-name {
+      margin: 0 0 8px;
+      font-family: "Gloock", "Times New Roman", serif;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      color: #1f6b4a;
+    }
+    .cert-course {
+      margin: 0 0 28px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #14201b;
+    }
+    .cert-meta {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 36px;
+      text-align: left;
+    }
+    .cert-meta div {
+      padding-top: 12px;
+      border-top: 1px solid rgba(20, 32, 27, 0.12);
+    }
+    .cert-meta span {
+      display: block;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #5d6f66;
+      margin-bottom: 4px;
+    }
+    .cert-meta strong {
+      font-size: 0.95rem;
+      color: #14201b;
+      font-weight: 600;
+    }
+    .cert-logo {
+      width: 56px;
+      height: 56px;
+      object-fit: contain;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 720px) {
+      .cert-sheet { padding: 32px 22px; }
+      .cert-meta { grid-template-columns: 1fr; }
+    }
+    @media print {
+      .topbar, .cert-toolbar, .cert-missing { display: none !important; }
+      body { background: #fff !important; }
+      .cert-page { padding: 0; max-width: none; }
+      .cert-sheet {
+        box-shadow: none;
+        border-radius: 0;
+        border: 0;
+        min-height: 100vh;
+        display: grid;
+        align-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html" aria-label="Folio home">
+        <img src="assets/logo.png" alt="" width="36" height="36" />
+        <strong>Fol<span>io</span></strong>
+      </a>
+      <div class="topbar-actions">
+        <a class="btn btn-light" href="account.html#certificates">My certificates</a>
+        <a class="btn btn-dark" href="account.html">Account</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="cert-page">
+    <p class="empty cert-missing" id="cert-missing" hidden>
+      Certificate not found. <a href="account.html#certificates">Back to My certificates</a>
+    </p>
+    <div id="cert-root" hidden>
+      <div class="cert-toolbar">
+        <button class="btn btn-leaf" type="button" id="print-cert">Print / Save as PDF</button>
+        <a class="btn btn-light" href="account.html#certificates">Back</a>
+      </div>
+      <article class="cert-sheet" id="cert-sheet">
+        <img class="cert-logo" src="assets/logo.png" alt="" />
+        <p class="cert-kicker">Folio Online School</p>
+        <h1>Certificate of Completion</h1>
+        <p class="cert-lead">This certifies that</p>
+        <p class="cert-name" id="cert-student"></p>
+        <p class="cert-lead">has successfully completed</p>
+        <p class="cert-course" id="cert-course"></p>
+        <div class="cert-meta">
+          <div>
+            <span>Instructor</span>
+            <strong id="cert-instructor"></strong>
+          </div>
+          <div>
+            <span>Issued</span>
+            <strong id="cert-date"></strong>
+          </div>
+          <div>
+            <span>Certificate ID</span>
+            <strong id="cert-code"></strong>
+          </div>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <script src="js/auth.js?v=34"></script>
+  <script>
+    const user = FolioAuth.requireAuth(
+      "login.html?next=" + encodeURIComponent("certificate.html" + location.search)
+    );
+    const id = new URLSearchParams(location.search).get("id") || "";
+    const missing = document.getElementById("cert-missing");
+    const root = document.getElementById("cert-root");
+
+    if (user) {
+      const cert = FolioAuth.getCertificateById(id, user.id);
+      if (!cert) {
+        missing.hidden = false;
+        root.hidden = true;
+      } else {
+        missing.hidden = true;
+        root.hidden = false;
+        document.title = `${cert.courseTitle} certificate — Folio`;
+        document.getElementById("cert-student").textContent = cert.studentName;
+        document.getElementById("cert-course").textContent = cert.courseTitle;
+        document.getElementById("cert-instructor").textContent = cert.instructorName;
+        document.getElementById("cert-date").textContent = (cert.issuedAt || "").slice(0, 10) || "—";
+        document.getElementById("cert-code").textContent = cert.certificateCode;
+        document.getElementById("print-cert").addEventListener("click", () => window.print());
+      }
+    }
+  </script>
+</body>
+</html>
