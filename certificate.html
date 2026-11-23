@@ -8,122 +8,433 @@
   <link rel="icon" href="assets/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=33" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Gloock&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css?v=34" />
   <style>
-    .cert-page {
-      max-width: 920px;
-      margin: 0 auto;
-      padding: 28px 20px 64px;
+    :root {
+      --cert-ink: #14201b;
+      --cert-soft: #3d5248;
+      --cert-leaf: #1f6b4a;
+      --cert-gold: #b08d3c;
+      --cert-gold-soft: #d4b56a;
+      --cert-paper: #fbfaf6;
+      --cert-mist: #e7efe9;
     }
+
+    body.cert-body {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 90% 60% at 50% -10%, rgba(31, 107, 74, 0.14), transparent 55%),
+        linear-gradient(180deg, #eef3f0, #e4ebe6 40%, #dfe8e2);
+    }
+
+    .cert-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 72px;
+    }
+
     .cert-toolbar {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
       margin-bottom: 18px;
     }
+
+    .cert-toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .cert-toolbar p {
+      margin: 0;
+      color: var(--cert-soft);
+      font-size: 0.9rem;
+    }
+
+    .cert-stage {
+      perspective: 1400px;
+    }
+
     .cert-sheet {
       position: relative;
-      padding: 48px 42px;
-      border: 1px solid rgba(20, 32, 27, 0.16);
-      border-radius: 18px;
+      aspect-ratio: 1.414 / 1;
+      width: 100%;
+      margin: 0 auto;
+      padding: clamp(28px, 4.2vw, 52px);
+      color: var(--cert-ink);
       background:
-        radial-gradient(circle at top right, rgba(41, 171, 135, 0.12), transparent 40%),
-        linear-gradient(180deg, #ffffff, #f7faf8);
-      box-shadow: 0 18px 40px rgba(20, 32, 27, 0.08);
-      text-align: center;
+        linear-gradient(135deg, rgba(176, 141, 60, 0.07), transparent 28%),
+        linear-gradient(315deg, rgba(31, 107, 74, 0.08), transparent 32%),
+        radial-gradient(circle at 12% 18%, rgba(212, 181, 106, 0.18), transparent 26%),
+        radial-gradient(circle at 88% 82%, rgba(31, 107, 74, 0.1), transparent 24%),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(20, 32, 27, 0.012) 2px,
+          rgba(20, 32, 27, 0.012) 3px
+        ),
+        var(--cert-paper);
+      border-radius: 4px;
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.7) inset,
+        0 24px 60px rgba(20, 32, 27, 0.16),
+        0 2px 8px rgba(20, 32, 27, 0.08);
       overflow: hidden;
+      isolation: isolate;
     }
-    .cert-sheet::before {
-      content: "";
+
+    .cert-frame {
       position: absolute;
       inset: 14px;
-      border: 2px solid rgba(31, 107, 74, 0.28);
-      border-radius: 12px;
+      border: 1.5px solid rgba(176, 141, 60, 0.55);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .cert-frame::before {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border: 1px solid rgba(31, 107, 74, 0.28);
+    }
+
+    .cert-corner {
+      position: absolute;
+      width: 54px;
+      height: 54px;
+      z-index: 2;
       pointer-events: none;
     }
+
+    .cert-corner svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .cert-corner-tl { top: 18px; left: 18px; }
+    .cert-corner-tr { top: 18px; right: 18px; transform: scaleX(-1); }
+    .cert-corner-bl { bottom: 18px; left: 18px; transform: scaleY(-1); }
+    .cert-corner-br { bottom: 18px; right: 18px; transform: scale(-1); }
+
+    .cert-watermark {
+      position: absolute;
+      left: 50%;
+      top: 54%;
+      width: min(420px, 48%);
+      transform: translate(-50%, -50%);
+      opacity: 0.06;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .cert-inner {
+      position: relative;
+      z-index: 3;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      text-align: center;
+    }
+
+    .cert-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: clamp(8px, 1.5vw, 16px);
+    }
+
+    .cert-brand img {
+      width: clamp(42px, 5vw, 58px);
+      height: clamp(42px, 5vw, 58px);
+      object-fit: contain;
+      filter: drop-shadow(0 4px 10px rgba(20, 32, 27, 0.12));
+    }
+
+    .cert-brand strong {
+      font-family: "Gloock", "Times New Roman", serif;
+      font-size: clamp(1.45rem, 2.4vw, 1.9rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+    }
+
+    .cert-brand strong span {
+      color: var(--cert-leaf);
+    }
+
+    .cert-ornament {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin: 4px 0 10px;
+      color: var(--cert-gold);
+    }
+
+    .cert-ornament span {
+      width: min(120px, 16vw);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cert-gold-soft), transparent);
+    }
+
+    .cert-ornament svg {
+      width: 18px;
+      height: 18px;
+    }
+
     .cert-kicker {
-      margin: 0 0 10px;
-      font-size: 0.78rem;
+      margin: 0 0 6px;
+      font-family: "IBM Plex Sans", sans-serif;
+      font-size: clamp(0.68rem, 1.1vw, 0.78rem);
       font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--cert-leaf);
+    }
+
+    .cert-title {
+      margin: 0 0 4px;
+      font-family: "Cormorant Garamond", "Times New Roman", serif;
+      font-size: clamp(2.2rem, 5.2vw, 3.6rem);
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: 0.01em;
+      color: var(--cert-ink);
+    }
+
+    .cert-subtitle {
+      margin: 0 auto 18px;
+      max-width: 34rem;
+      font-family: "Cormorant Garamond", serif;
+      font-style: italic;
+      font-size: clamp(1.05rem, 2vw, 1.3rem);
+      color: var(--cert-soft);
+    }
+
+    .cert-body {
+      display: grid;
+      align-content: center;
+      gap: 6px;
+      padding: 4px 0 10px;
+    }
+
+    .cert-lead {
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(1rem, 1.8vw, 1.2rem);
+      color: var(--cert-soft);
+    }
+
+    .cert-name {
+      margin: 4px 0 2px;
+      font-family: "Gloock", "Times New Roman", serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 400;
+      line-height: 1.1;
+      color: var(--cert-leaf);
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+
+    .cert-name-rule {
+      width: min(420px, 55%);
+      height: 1px;
+      margin: 2px auto 10px;
+      background: linear-gradient(90deg, transparent, rgba(176, 141, 60, 0.7), transparent);
+    }
+
+    .cert-course {
+      margin: 0 auto;
+      max-width: 38rem;
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(1.35rem, 2.8vw, 1.85rem);
+      font-weight: 600;
+      line-height: 1.25;
+      color: var(--cert-ink);
+    }
+
+    .cert-seal-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-top: clamp(18px, 3vw, 28px);
+      padding: 0 clamp(8px, 2vw, 24px);
+    }
+
+    .cert-sign {
+      flex: 1;
+      min-width: 0;
+      text-align: center;
+    }
+
+    .cert-sign-line {
+      width: min(180px, 100%);
+      margin: 0 auto 8px;
+      border-bottom: 1px solid rgba(20, 32, 27, 0.35);
+      padding-bottom: 4px;
+      font-family: "Cormorant Garamond", serif;
+      font-style: italic;
+      font-size: 1.15rem;
+      color: var(--cert-ink);
+      min-height: 28px;
+    }
+
+    .cert-sign span {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cert-soft);
+    }
+
+    .cert-seal {
+      width: clamp(92px, 12vw, 118px);
+      height: clamp(92px, 12vw, 118px);
+      flex-shrink: 0;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, #f0e2b8, transparent 40%),
+        radial-gradient(circle at 50% 50%, #1f6b4a, #144832 70%, #0f3426);
+      color: #f7efd4;
+      display: grid;
+      place-items: center;
+      box-shadow:
+        0 0 0 4px rgba(176, 141, 60, 0.35),
+        0 0 0 7px rgba(31, 107, 74, 0.2),
+        0 10px 24px rgba(20, 32, 27, 0.22);
+      transform: rotate(-6deg);
+    }
+
+    .cert-seal-inner {
+      width: 78%;
+      height: 78%;
+      border: 1px dashed rgba(247, 239, 212, 0.55);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+    }
+
+    .cert-seal strong {
+      display: block;
+      font-family: "Gloock", serif;
+      font-size: clamp(0.72rem, 1.2vw, 0.9rem);
+      font-weight: 400;
+      letter-spacing: 0.04em;
+    }
+
+    .cert-seal em {
+      display: block;
+      margin-top: 2px;
+      font-style: normal;
+      font-size: 0.58rem;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: #1f6b4a;
+      opacity: 0.85;
     }
-    .cert-sheet h1 {
-      margin: 0 0 8px;
-      font-family: "Gloock", "Times New Roman", serif;
-      font-size: clamp(2rem, 5vw, 3rem);
-      font-weight: 400;
-      color: #14201b;
-    }
-    .cert-sheet .cert-lead {
-      margin: 0 auto 28px;
-      max-width: 36rem;
-      color: #5d6f66;
-    }
-    .cert-name {
-      margin: 0 0 8px;
-      font-family: "Gloock", "Times New Roman", serif;
-      font-size: clamp(1.8rem, 4vw, 2.6rem);
-      color: #1f6b4a;
-    }
-    .cert-course {
-      margin: 0 0 28px;
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #14201b;
-    }
-    .cert-meta {
+
+    .cert-footer {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-top: 36px;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: end;
+      margin-top: clamp(16px, 2.5vw, 24px);
+      padding-top: 14px;
+      border-top: 1px solid rgba(176, 141, 60, 0.28);
       text-align: left;
     }
-    .cert-meta div {
-      padding-top: 12px;
-      border-top: 1px solid rgba(20, 32, 27, 0.12);
+
+    .cert-footer div:last-child {
+      text-align: right;
     }
-    .cert-meta span {
+
+    .cert-footer div:nth-child(2) {
+      text-align: center;
+    }
+
+    .cert-footer span {
       display: block;
-      font-size: 0.75rem;
-      letter-spacing: 0.06em;
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: #5d6f66;
-      margin-bottom: 4px;
+      color: var(--cert-soft);
+      margin-bottom: 3px;
     }
-    .cert-meta strong {
-      font-size: 0.95rem;
-      color: #14201b;
+
+    .cert-footer strong {
+      font-family: "IBM Plex Sans", sans-serif;
+      font-size: clamp(0.78rem, 1.3vw, 0.9rem);
       font-weight: 600;
+      color: var(--cert-ink);
+      word-break: break-word;
     }
-    .cert-logo {
-      width: 56px;
-      height: 56px;
-      object-fit: contain;
-      margin-bottom: 12px;
+
+    @media (max-width: 760px) {
+      .cert-sheet {
+        aspect-ratio: auto;
+        min-height: 640px;
+      }
+
+      .cert-seal-row {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .cert-footer {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .cert-footer div:last-child,
+      .cert-footer div:nth-child(2) {
+        text-align: center;
+      }
     }
-    @media (max-width: 720px) {
-      .cert-sheet { padding: 32px 22px; }
-      .cert-meta { grid-template-columns: 1fr; }
-    }
+
     @media print {
-      .topbar, .cert-toolbar, .cert-missing { display: none !important; }
-      body { background: #fff !important; }
-      .cert-page { padding: 0; max-width: none; }
+      @page {
+        size: landscape;
+        margin: 10mm;
+      }
+
+      .topbar,
+      .cert-toolbar,
+      .cert-missing {
+        display: none !important;
+      }
+
+      body.cert-body {
+        background: #fff !important;
+      }
+
+      .cert-page {
+        padding: 0;
+        max-width: none;
+      }
+
       .cert-sheet {
         box-shadow: none;
         border-radius: 0;
-        border: 0;
-        min-height: 100vh;
-        display: grid;
-        align-content: center;
+        width: 100%;
+        height: auto;
+        min-height: 0;
+        aspect-ratio: 1.414 / 1;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
     }
   </style>
 </head>
-<body>
+<body class="cert-body">
   <header class="topbar">
     <div class="topbar-inner">
       <a class="brand" href="index.html" aria-label="Folio home">
@@ -141,34 +452,111 @@
     <p class="empty cert-missing" id="cert-missing" hidden>
       Certificate not found. <a href="account.html#certificates">Back to My certificates</a>
     </p>
+
     <div id="cert-root" hidden>
       <div class="cert-toolbar">
-        <button class="btn btn-leaf" type="button" id="print-cert">Print / Save as PDF</button>
-        <a class="btn btn-light" href="account.html#certificates">Back</a>
-      </div>
-      <article class="cert-sheet" id="cert-sheet">
-        <img class="cert-logo" src="assets/logo.png" alt="" />
-        <p class="cert-kicker">Folio Online School</p>
-        <h1>Certificate of Completion</h1>
-        <p class="cert-lead">This certifies that</p>
-        <p class="cert-name" id="cert-student"></p>
-        <p class="cert-lead">has successfully completed</p>
-        <p class="cert-course" id="cert-course"></p>
-        <div class="cert-meta">
-          <div>
-            <span>Instructor</span>
-            <strong id="cert-instructor"></strong>
-          </div>
-          <div>
-            <span>Issued</span>
-            <strong id="cert-date"></strong>
-          </div>
-          <div>
-            <span>Certificate ID</span>
-            <strong id="cert-code"></strong>
-          </div>
+        <p>Official Folio completion certificate — print or save as PDF.</p>
+        <div class="cert-toolbar-actions">
+          <button class="btn btn-leaf" type="button" id="print-cert">Print / Save as PDF</button>
+          <a class="btn btn-light" href="account.html#certificates">Back</a>
         </div>
-      </article>
+      </div>
+
+      <div class="cert-stage">
+        <article class="cert-sheet" id="cert-sheet" aria-label="Folio certificate">
+          <div class="cert-frame" aria-hidden="true"></div>
+
+          <div class="cert-corner cert-corner-tl" aria-hidden="true">
+            <svg viewBox="0 0 54 54" fill="none">
+              <path d="M4 50 V14 Q4 4 14 4 H50" stroke="#b08d3c" stroke-width="2"/>
+              <path d="M10 50 V18 Q10 10 18 10 H50" stroke="#1f6b4a" stroke-width="1.2" opacity="0.7"/>
+              <circle cx="16" cy="16" r="2.2" fill="#b08d3c"/>
+            </svg>
+          </div>
+          <div class="cert-corner cert-corner-tr" aria-hidden="true">
+            <svg viewBox="0 0 54 54" fill="none">
+              <path d="M4 50 V14 Q4 4 14 4 H50" stroke="#b08d3c" stroke-width="2"/>
+              <path d="M10 50 V18 Q10 10 18 10 H50" stroke="#1f6b4a" stroke-width="1.2" opacity="0.7"/>
+              <circle cx="16" cy="16" r="2.2" fill="#b08d3c"/>
+            </svg>
+          </div>
+          <div class="cert-corner cert-corner-bl" aria-hidden="true">
+            <svg viewBox="0 0 54 54" fill="none">
+              <path d="M4 50 V14 Q4 4 14 4 H50" stroke="#b08d3c" stroke-width="2"/>
+              <path d="M10 50 V18 Q10 10 18 10 H50" stroke="#1f6b4a" stroke-width="1.2" opacity="0.7"/>
+              <circle cx="16" cy="16" r="2.2" fill="#b08d3c"/>
+            </svg>
+          </div>
+          <div class="cert-corner cert-corner-br" aria-hidden="true">
+            <svg viewBox="0 0 54 54" fill="none">
+              <path d="M4 50 V14 Q4 4 14 4 H50" stroke="#b08d3c" stroke-width="2"/>
+              <path d="M10 50 V18 Q10 10 18 10 H50" stroke="#1f6b4a" stroke-width="1.2" opacity="0.7"/>
+              <circle cx="16" cy="16" r="2.2" fill="#b08d3c"/>
+            </svg>
+          </div>
+
+          <img class="cert-watermark" src="assets/logo.png" alt="" aria-hidden="true" />
+
+          <div class="cert-inner">
+            <header>
+              <div class="cert-brand">
+                <img src="assets/logo.png" alt="" />
+                <strong>Fol<span>io</span></strong>
+              </div>
+              <div class="cert-ornament" aria-hidden="true">
+                <span></span>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.4 6.1L20 8l-5.2 3.4L16.8 18 12 14.8 7.2 18l2-6.6L4 8l6.6-.9L12 2z"/></svg>
+                <span></span>
+              </div>
+              <p class="cert-kicker">Online School · Certificate of Completion</p>
+              <h1 class="cert-title">Certificate of Achievement</h1>
+              <p class="cert-subtitle">Awarded for dedicated study and successful course completion</p>
+            </header>
+
+            <div class="cert-body">
+              <p class="cert-lead">This is to certify that</p>
+              <p class="cert-name" id="cert-student">Student Name</p>
+              <div class="cert-name-rule" aria-hidden="true"></div>
+              <p class="cert-lead">has successfully completed the course</p>
+              <p class="cert-course" id="cert-course">Course Title</p>
+
+              <div class="cert-seal-row">
+                <div class="cert-sign">
+                  <div class="cert-sign-line" id="cert-instructor-sign">Instructor</div>
+                  <span>Course instructor</span>
+                </div>
+
+                <div class="cert-seal" aria-hidden="true">
+                  <div class="cert-seal-inner">
+                    <strong>Folio</strong>
+                    <em>Verified</em>
+                  </div>
+                </div>
+
+                <div class="cert-sign">
+                  <div class="cert-sign-line">Folio School</div>
+                  <span>Academic office</span>
+                </div>
+              </div>
+            </div>
+
+            <footer class="cert-footer">
+              <div>
+                <span>Date issued</span>
+                <strong id="cert-date">—</strong>
+              </div>
+              <div>
+                <span>Instructor</span>
+                <strong id="cert-instructor">—</strong>
+              </div>
+              <div>
+                <span>Certificate ID</span>
+                <strong id="cert-code">—</strong>
+              </div>
+            </footer>
+          </div>
+        </article>
+      </div>
     </div>
   </main>
 
@@ -180,6 +568,17 @@
     const id = new URLSearchParams(location.search).get("id") || "";
     const missing = document.getElementById("cert-missing");
     const root = document.getElementById("cert-root");
+
+    function formatDate(iso) {
+      if (!iso) return "—";
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return String(iso).slice(0, 10);
+      return d.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
 
     if (user) {
       const cert = FolioAuth.getCertificateById(id, user.id);
@@ -193,7 +592,8 @@
         document.getElementById("cert-student").textContent = cert.studentName;
         document.getElementById("cert-course").textContent = cert.courseTitle;
         document.getElementById("cert-instructor").textContent = cert.instructorName;
-        document.getElementById("cert-date").textContent = (cert.issuedAt || "").slice(0, 10) || "—";
+        document.getElementById("cert-instructor-sign").textContent = cert.instructorName;
+        document.getElementById("cert-date").textContent = formatDate(cert.issuedAt);
         document.getElementById("cert-code").textContent = cert.certificateCode;
         document.getElementById("print-cert").addEventListener("click", () => window.print());
       }
