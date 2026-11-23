@@ -1827,7 +1827,65 @@ th {
   width: 64px;
   height: 88px;
   border-radius: 6px;
-  background: linear-gradient(145deg, #d9ebe0, #b7d4c4);
+  background: linear-gradient(145deg, #d9ebe0, #b7d4c4) center / cover no-repeat;
+}
+
+.listing-cover.has-photo {
+  background-color: #d9ebe0;
+}
+
+.book-upload-layout {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.admin-book-thumb {
+  width: 36px;
+  height: 48px;
+  border-radius: 4px;
+  background: #e8efe9 center / cover no-repeat;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.book-cover-upload {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.book-cover-preview {
+  width: 140px;
+  height: 200px;
+  border-radius: 10px;
+  border: 1px dashed var(--line);
+  background: #eef3f0 center / cover no-repeat;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.book-cover-preview.has-photo {
+  border-style: solid;
+}
+
+.book-cover-preview.has-photo span {
+  display: none;
+}
+
+.book-upload-fields {
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .book-upload-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .listing-card h3 {

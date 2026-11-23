@@ -895,10 +895,13 @@
         } else {
           pendingEmpty.hidden = true;
           pendingBody.innerHTML = pendingListings
-            .map(
-              (item) => `
+            .map((item) => {
+              const thumb = item.coverImage
+                ? `<span class="admin-book-thumb" style="background-image:url('${String(item.coverImage).replace(/'/g, "%27")}')"></span>`
+                : "";
+              return `
             <tr>
-              <td><strong>${escapeHtml(item.title)}</strong><br /><span style="color:var(--muted)">${escapeHtml(item.author)}</span></td>
+              <td>${thumb}<strong>${escapeHtml(item.title)}</strong><br /><span style="color:var(--muted)">${escapeHtml(item.author)}</span></td>
               <td>${escapeHtml(item.sellerName)}</td>
               <td>${money(item.price)}</td>
               <td>
@@ -907,8 +910,8 @@
                   <button class="tiny" type="button" data-reject="${item.id}">Reject</button>
                 </div>
               </td>
-            </tr>`
-            )
+            </tr>`;
+            })
             .join("");
         }
 

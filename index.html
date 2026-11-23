@@ -1223,6 +1223,14 @@
       gap: 2px;
     }
 
+    .book-seller {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--leaf);
+    }
+
     .book-meta h3 {
       margin: 0;
       font-size: 0.9rem;
@@ -2053,7 +2061,7 @@
     </div>
   </footer>
 
-  <script src="js/auth.js?v=32"></script>
+  <script src="js/auth.js?v=33"></script>
   <script src="js/seo.js?v=1"></script>
   <script>
     if (window.FolioSEO) FolioSEO.applyHome();
@@ -2077,8 +2085,42 @@
       });
     }
 
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function renderMarketplaceListings() {
+      const grid = document.querySelector(".stack-grid");
+      if (!grid || !window.FolioAuth) return;
+      const live = FolioAuth.getLiveMarketplaceListings().slice(0, 24);
+      if (!live.length) return;
+      const cards = live
+        .map((item) => {
+          const cover = item.coverImage
+            ? `<img src="${escapeHtml(item.coverImage)}" alt="${escapeHtml(item.title)} cover" />`
+            : `<img src="assets/cover-1.jpg" alt="" />`;
+          return `
+          <a class="book book-marketplace" href="account.html#books" data-listing-id="${escapeHtml(item.id)}">
+            <div class="book-cover">${cover}</div>
+            <div class="book-meta">
+              <h3>${escapeHtml(item.title)}</h3>
+              <p>${escapeHtml(item.author)}</p>
+              <strong class="price" data-usd="${Number(item.price) || 0}">${FolioAuth.formatMoney(item.price)}</strong>
+              <span class="book-seller">Seller · ${escapeHtml(item.sellerName || "Folio")}</span>
+            </div>
+          </a>`;
+        })
+        .join("");
+      grid.insertAdjacentHTML("afterbegin", cards);
+    }
+
     FolioAuth.mountCurrencySelect(document.getElementById("currency-select"), applyPrices);
     window.addEventListener("folio:currency", applyPrices);
+    renderMarketplaceListings();
     applyPrices();
   </script>
 </body>

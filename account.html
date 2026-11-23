@@ -115,37 +115,56 @@
           <div class="panel" id="sell">
             <h2>My books — list for sale</h2>
             <p class="hint" style="margin-top:0;margin-bottom:16px">
-              Upload a title from your shelf. New listings start as <strong>pending</strong> until admin review.
+              Upload a cover photo and listing details. New books start as <strong>pending</strong> until admin review, then appear in the shop stacks.
             </p>
             <form id="sell-form">
               <p class="form-msg" id="sell-msg"></p>
-              <div class="field">
-                <label for="book-title">Book title</label>
-                <input id="book-title" type="text" required placeholder="e.g. Circe" />
+              <div class="book-upload-layout">
+                <div class="book-cover-upload">
+                  <div class="book-cover-preview" id="book-cover-preview" aria-hidden="true">
+                    <span>Cover</span>
+                  </div>
+                  <label class="btn btn-light profile-file-btn" for="book-cover">Choose cover photo</label>
+                  <input id="book-cover" type="file" accept="image/*" required hidden />
+                  <button class="btn btn-light" type="button" id="book-cover-clear" hidden>Remove photo</button>
+                  <p class="hint" style="margin:8px 0 0">JPG, PNG, or WebP · up to 8MB</p>
+                </div>
+                <div class="book-upload-fields">
+                  <div class="field">
+                    <label for="book-title">Book title</label>
+                    <input id="book-title" type="text" required maxlength="140" placeholder="e.g. Circe" />
+                  </div>
+                  <div class="field">
+                    <label for="book-author">Author</label>
+                    <input id="book-author" type="text" required maxlength="120" placeholder="e.g. Madeline Miller" />
+                  </div>
+                  <div class="field">
+                    <label for="book-price">Asking price (USD)</label>
+                    <input id="book-price" type="number" min="1" step="0.01" required placeholder="14.00" />
+                  </div>
+                  <div class="field">
+                    <label for="book-condition">Condition</label>
+                    <select id="book-condition" required>
+                      <option value="New">New</option>
+                      <option value="Like new">Like new</option>
+                      <option value="Good" selected>Good</option>
+                      <option value="Fair">Fair</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="book-notes">Notes for buyers</label>
+                    <textarea id="book-notes" maxlength="800" placeholder="Edition, wear, why you're selling…"></textarea>
+                  </div>
+                  <button class="btn btn-leaf" type="submit" id="sell-submit">Upload book for sale</button>
+                </div>
               </div>
-              <div class="field">
-                <label for="book-author">Author</label>
-                <input id="book-author" type="text" required placeholder="e.g. Madeline Miller" />
-              </div>
-              <div class="field">
-                <label for="book-price">Asking price (stored in USD)</label>
-                <input id="book-price" type="number" min="1" step="0.01" required placeholder="14.00" />
-              </div>
-              <div class="field">
-                <label for="book-condition">Condition</label>
-                <select id="book-condition" required>
-                  <option value="New">New</option>
-                  <option value="Like new">Like new</option>
-                  <option value="Good">Good</option>
-                  <option value="Fair">Fair</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="book-notes">Notes for buyers</label>
-                <textarea id="book-notes" placeholder="Edition, wear, why you're selling…"></textarea>
-              </div>
-              <button class="btn btn-leaf" type="submit">Upload listing</button>
             </form>
+          </div>
+
+          <div class="panel" style="margin-top:18px">
+            <h2>Your uploaded books</h2>
+            <p class="hint" style="margin-top:0">Pending books wait for admin approval. Live books show in the shop.</p>
+            <div id="books-upload-list"></div>
           </div>
         </section>
 
@@ -392,7 +411,7 @@
     </div>
   </main>
 
-  <script src="js/auth.js?v=32"></script>
+  <script src="js/auth.js?v=33"></script>
   <script>
     const user = FolioAuth.requireAuth(
       "login.html?next=" + encodeURIComponent("account.html" + (location.hash || ""))
@@ -484,6 +503,7 @@
         });
         if (name === "dashboard") renderDashboard();
         if (name === "listings") renderListings();
+        if (name === "books") renderBooksUploads();
         if (name === "learning") renderLearning();
         if (name === "notifications") renderNotifications();
         if (name === "teach") renderTeach();
@@ -632,13 +652,16 @@
                   ? `<button class="tiny danger" type="button" data-delete="${item.id}">Remove</button>`
                   : `<button class="tiny danger" type="button" data-delete="${item.id}">Remove</button>`;
 
+            const coverStyle = item.coverImage
+              ? `style="background-image:url('${String(item.coverImage).replace(/'/g, "%27")}')"`
+              : "";
             return `
               <article class="listing-card">
-                <div class="listing-cover" aria-hidden="true"></div>
+                <div class="listing-cover ${item.coverImage ? "has-photo" : ""}" ${coverStyle} aria-hidden="true"></div>
                 <div>
                   <h3>${escapeHtml(item.title)}</h3>
                   <p>${escapeHtml(item.author)} · ${money(item.price)} · ${escapeHtml(item.condition)}</p>
-                  <p style="margin-top:6px">${badge(item.status)} · Live ${live.length} · Pending ${pending.length}</p>
+                  <p style="margin-top:6px">${badge(item.status)}</p>
                   ${soldInfo}
                 </div>
                 <div class="row-actions">${actions}</div>
@@ -922,25 +945,109 @@
         window.location.href = "tutor-dashboard.html";
       });
 
-      document.getElementById("sell-form").addEventListener("submit", (e) => {
+      let selectedCoverFile = null;
+
+      function resetCoverPreview() {
+        selectedCoverFile = null;
+        const input = document.getElementById("book-cover");
+        const preview = document.getElementById("book-cover-preview");
+        const clearBtn = document.getElementById("book-cover-clear");
+        if (input) input.value = "";
+        if (preview) {
+          preview.style.backgroundImage = "";
+          preview.classList.remove("has-photo");
+          preview.innerHTML = "<span>Cover</span>";
+        }
+        if (clearBtn) clearBtn.hidden = true;
+      }
+
+      function renderBooksUploads() {
+        const box = document.getElementById("books-upload-list");
+        if (!box) return;
+        const listings = FolioAuth.getListingsBySeller(user.id);
+        if (!listings.length) {
+          box.innerHTML = `<p class="empty">No books uploaded yet. Add your first cover and listing above.</p>`;
+          return;
+        }
+        box.innerHTML = listings
+          .map((item) => {
+            const coverStyle = item.coverImage
+              ? `style="background-image:url('${String(item.coverImage).replace(/'/g, "%27")}')"`
+              : "";
+            return `
+              <article class="listing-card">
+                <div class="listing-cover ${item.coverImage ? "has-photo" : ""}" ${coverStyle} aria-hidden="true"></div>
+                <div>
+                  <h3>${escapeHtml(item.title)}</h3>
+                  <p>${escapeHtml(item.author)} · ${money(item.price)} · ${escapeHtml(item.condition || "")}</p>
+                  <p style="margin-top:6px">${badge(item.status)} · ${(item.createdAt || "").slice(0, 10)}</p>
+                  ${item.notes ? `<p style="margin-top:6px">${escapeHtml(item.notes)}</p>` : ""}
+                </div>
+                <div class="row-actions">
+                  <button class="tiny danger" type="button" data-delete-book="${item.id}">Remove</button>
+                </div>
+              </article>`;
+          })
+          .join("");
+        box.querySelectorAll("[data-delete-book]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            if (!window.confirm("Remove this book listing?")) return;
+            FolioAuth.deleteListing(btn.dataset.deleteBook);
+            renderBooksUploads();
+            renderListings();
+          });
+        });
+      }
+
+      document.getElementById("book-cover").addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+        selectedCoverFile = file;
+        const preview = document.getElementById("book-cover-preview");
+        const clearBtn = document.getElementById("book-cover-clear");
+        if (!file) {
+          resetCoverPreview();
+          return;
+        }
+        const url = URL.createObjectURL(file);
+        preview.style.backgroundImage = `url("${url}")`;
+        preview.classList.add("has-photo");
+        preview.innerHTML = "";
+        clearBtn.hidden = false;
+      });
+
+      document.getElementById("book-cover-clear").addEventListener("click", () => {
+        resetCoverPreview();
+      });
+
+      document.getElementById("sell-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const msg = document.getElementById("sell-msg");
-        FolioAuth.saveListing({
-          id: "list_" + Date.now(),
+        const submitBtn = document.getElementById("sell-submit");
+        msg.textContent = "Uploading book…";
+        msg.classList.remove("ok");
+        submitBtn.disabled = true;
+        const result = await FolioAuth.createBookListing({
           sellerId: user.id,
-          sellerName: user.name,
-          sellerEmail: user.email,
-          title: document.getElementById("book-title").value.trim(),
-          author: document.getElementById("book-author").value.trim(),
-          price: Number(document.getElementById("book-price").value),
+          title: document.getElementById("book-title").value,
+          author: document.getElementById("book-author").value,
+          price: document.getElementById("book-price").value,
           condition: document.getElementById("book-condition").value,
-          notes: document.getElementById("book-notes").value.trim(),
-          status: "pending",
-          createdAt: new Date().toISOString(),
+          notes: document.getElementById("book-notes").value,
+          coverFile: selectedCoverFile,
         });
-        msg.textContent = "Listing uploaded and waiting for admin review.";
+        submitBtn.disabled = false;
+        if (!result.ok) {
+          msg.textContent = result.error;
+          return;
+        }
+        const status = result.listing.status === "live" ? "live in the shop" : "waiting for admin review";
+        msg.textContent = `“${result.listing.title}” uploaded and is ${status}.`;
         msg.classList.add("ok");
         e.target.reset();
+        resetCoverPreview();
+        renderBooksUploads();
+        renderListings();
+        updateNotifBadge();
       });
 
       document.getElementById("withdraw-form").addEventListener("submit", (e) => {

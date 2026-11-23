@@ -44,6 +44,7 @@
     social_comment: { limit: 40, windowMs: 60 * 60 * 1000 },
     follow: { limit: 60, windowMs: 60 * 60 * 1000 },
     profile_image: { limit: 10, windowMs: 60 * 60 * 1000 },
+    book_listing: { limit: 20, windowMs: 60 * 60 * 1000 },
   };
 
   const memoryCache = new Map();
@@ -917,6 +918,86 @@
       }
 
       return listing;
+    },
+
+    getLiveMarketplaceListings() {
+      return this.getListings()
+        .filter((item) => item.status === "live")
+        .slice()
+        .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+    },
+
+    async createBookListing({
+      sellerId,
+      title,
+      author,
+      price,
+      condition,
+      notes,
+      coverFile,
+      coverImage,
+    }) {
+      const seller = this.getUsers().find((u) => u.id === sellerId);
+      if (!seller || seller.role !== "customer") {
+        return { ok: false, error: "Sign in with a customer account to sell books." };
+      }
+      if (this.isAccountSuspended(seller)) {
+        return { ok: false, error: "Your account is suspended." };
+      }
+      const rate = consumeRateLimit("book_listing", sellerId);
+      if (!rate.ok) return { ok: false, error: rate.error };
+
+      const cleanTitle = String(title || "").trim();
+      const cleanAuthor = String(author || "").trim();
+      const amount = Number(price);
+      const cleanCondition = String(condition || "").trim() || "Good";
+      const cleanNotes = String(notes || "").trim();
+      if (!cleanTitle || !cleanAuthor) {
+        return { ok: false, error: "Add the book title and author." };
+      }
+      if (!Number.isFinite(amount) || amount < 1) {
+        return { ok: false, error: "Set a price of at least $1." };
+      }
+
+      let cover = String(coverImage || "").trim();
+      if (coverFile) {
+        const prepared = await this.prepareSocialImage(coverFile);
+        if (!prepared.ok) return prepared;
+        cover = prepared.dataUrl;
+      }
+      if (!cover) {
+        return { ok: false, error: "Upload a cover photo of the book." };
+      }
+
+      const listing = this.saveListing({
+        id: "list_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+        sellerId: seller.id,
+        sellerName: seller.name,
+        sellerEmail: seller.email,
+        title: cleanTitle,
+        author: cleanAuthor,
+        price: Number(amount.toFixed(2)),
+        condition: cleanCondition,
+        notes: cleanNotes,
+        coverImage: cover,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+      });
+
+      this.addNotification({
+        title: "Book listing submitted",
+        body: `“${cleanTitle}” was uploaded and is waiting for admin review.`,
+        userId: seller.id,
+        audience: "user",
+        fromUserName: "Folio",
+      });
+      this.addNotification({
+        title: "New book listing",
+        body: `${seller.name} uploaded “${cleanTitle}” for sale.`,
+        audience: "admin",
+      });
+
+      return { ok: true, listing };
     },
 
     updateListing(id, patch) {
