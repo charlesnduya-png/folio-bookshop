@@ -21,7 +21,7 @@
     feePercent: 12,
     tutorFeePercent: 25,
     currency: "USD",
-    autoApproveBooks: "yes",
+    autoApproveBooks: "no",
     minWithdrawal: 10,
     tutorAnnualFee: 99,
     seoTitle: "Folio — Books for every chapter",
@@ -426,49 +426,25 @@
     }
     {
       const settings = read(SETTINGS_KEY, DEFAULT_SETTINGS);
-      const nextSettings = {
-        ...settings,
-        tutorAnnualFee:
-          settings.tutorAnnualFee == null
-            ? DEFAULT_SETTINGS.tutorAnnualFee
-            : settings.tutorAnnualFee,
-        tutorFeePercent:
-          settings.tutorFeePercent == null
-            ? DEFAULT_SETTINGS.tutorFeePercent
-            : settings.tutorFeePercent,
-        // Listed books go live in the shop without waiting on admin review.
-        autoApproveBooks: "yes",
-      };
-      write(SETTINGS_KEY, nextSettings);
-
-      const listings = read(LISTINGS_KEY, []) || [];
-      let listingsChanged = false;
-      const promoted = listings.map((item) => {
-        if (item && item.status === "pending") {
-          listingsChanged = true;
-          return { ...item, status: "live", approvedAt: item.approvedAt || new Date().toISOString() };
-        }
-        return item;
-      });
-      if (listingsChanged) write(LISTINGS_KEY, promoted);
-
-      const users = read(USERS_KEY, []) || [];
-      let usersChanged = false;
-      const sellerIds = new Set(
-        promoted.filter((l) => l && l.status === "live" && l.sellerId).map((l) => l.sellerId)
-      );
-      const nextUsers = users.map((u) => {
-        if (
-          sellerIds.has(u.id) &&
-          u.role === "customer" &&
-          (u.sellerStatus === "pending" || !u.sellerStatus || u.sellerStatus === "none")
-        ) {
-          usersChanged = true;
-          return { ...u, sellerStatus: "approved" };
-        }
-        return u;
-      });
-      if (usersChanged) write(USERS_KEY, nextUsers);
+      if (
+        settings.tutorAnnualFee == null ||
+        settings.tutorFeePercent == null ||
+        settings.autoApproveBooks !== "no"
+      ) {
+        write(SETTINGS_KEY, {
+          ...settings,
+          tutorAnnualFee:
+            settings.tutorAnnualFee == null
+              ? DEFAULT_SETTINGS.tutorAnnualFee
+              : settings.tutorAnnualFee,
+          tutorFeePercent:
+            settings.tutorFeePercent == null
+              ? DEFAULT_SETTINGS.tutorFeePercent
+              : settings.tutorFeePercent,
+          // Sellers list books as pending; admin must approve before they go live.
+          autoApproveBooks: "no",
+        });
+      }
     }
     {
       const seedCourses = [
