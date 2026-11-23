@@ -261,8 +261,8 @@
     .cert-seal-row {
       display: flex;
       align-items: flex-end;
-      justify-content: space-between;
-      gap: 18px;
+      justify-content: center;
+      gap: clamp(28px, 6vw, 64px);
       margin-top: clamp(18px, 3vw, 28px);
       padding: 0 clamp(8px, 2vw, 24px);
     }
@@ -343,7 +343,7 @@
 
     .cert-footer {
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
       align-items: end;
       margin-top: clamp(16px, 2.5vw, 24px);
@@ -354,10 +354,6 @@
 
     .cert-footer div:last-child {
       text-align: right;
-    }
-
-    .cert-footer div:nth-child(2) {
-      text-align: center;
     }
 
     .cert-footer span {
@@ -393,8 +389,7 @@
         text-align: center;
       }
 
-      .cert-footer div:last-child,
-      .cert-footer div:nth-child(2) {
+      .cert-footer div:last-child {
         text-align: center;
       }
     }
@@ -518,11 +513,6 @@
               <p class="cert-course" id="cert-course">Course Title</p>
 
               <div class="cert-seal-row">
-                <div class="cert-sign">
-                  <div class="cert-sign-line" id="cert-instructor-sign">Instructor</div>
-                  <span>Course instructor</span>
-                </div>
-
                 <div class="cert-seal" aria-hidden="true">
                   <div class="cert-seal-inner">
                     <strong>Folio</strong>
@@ -541,10 +531,6 @@
               <div>
                 <span>Date issued</span>
                 <strong id="cert-date">—</strong>
-              </div>
-              <div>
-                <span>Instructor</span>
-                <strong id="cert-instructor">—</strong>
               </div>
               <div>
                 <span>Certificate ID</span>
@@ -588,8 +574,6 @@
         document.title = `${cert.courseTitle} certificate — Folio`;
         document.getElementById("cert-student").textContent = cert.studentName;
         document.getElementById("cert-course").textContent = cert.courseTitle;
-        document.getElementById("cert-instructor").textContent = cert.instructorName;
-        document.getElementById("cert-instructor-sign").textContent = cert.instructorName;
         document.getElementById("cert-date").textContent = formatDate(cert.issuedAt);
         document.getElementById("cert-code").textContent = cert.certificateCode;
         document.getElementById("print-cert").addEventListener("click", () => window.print());

@@ -533,6 +533,44 @@
       write(COURSES_KEY, [...byId.values()]);
     }
     if (!read(ENROLLMENTS_KEY, null)) write(ENROLLMENTS_KEY, []);
+    {
+      // Demo certificate for Maya Reader (reader@folio.com) — testing My certificates
+      const enrollments = read(ENROLLMENTS_KEY, []) || [];
+      const demoId = "enroll_demo_maya_cert";
+      if (!enrollments.some((e) => e.id === demoId)) {
+        const issuedAt = new Date().toISOString();
+        const endAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+        const startAt = new Date(Date.now() - 23 * 24 * 60 * 60 * 1000).toISOString();
+        enrollments.unshift({
+          id: demoId,
+          courseId: "course_2",
+          courseTitle: "Write Your First Short Story",
+          instructorId: "u_teacher",
+          instructorName: "Sam Tutor",
+          userId: "u_reader",
+          userName: "Maya Reader",
+          userEmail: "reader@folio.com",
+          amount: 79,
+          paid: true,
+          paidAt: startAt,
+          startAt,
+          endAt,
+          durationDays: 21,
+          status: "completed",
+          certStatus: "issued",
+          certRequestedAt: issuedAt,
+          certIssuedAt: issuedAt,
+          certificateCode: "FOLIO-READER-23918457",
+          certificateStudentName: "Maya Reader",
+          chapterProgress: {},
+          lastChapterId: "",
+          lastVideoTime: 0,
+          lastMaxWatched: 0,
+          lastOpenedAt: endAt,
+        });
+        write(ENROLLMENTS_KEY, enrollments);
+      }
+    }
     if (!read(BLOG_KEY, null)) write(BLOG_KEY, []);
     if (!read(FOLLOWS_KEY, null)) write(FOLLOWS_KEY, []);
     normalizeSchema();
